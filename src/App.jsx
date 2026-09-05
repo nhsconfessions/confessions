@@ -6,6 +6,36 @@ import ConfessionCard from "./components/ConfessionCard";
 import EmojiPicker from "./components/EmojiPicker";
 import Modal from "./components/Modal";
 import incognitoLogo from "./assets/incognito.svg";
+import readmeMarkdown from "./README.md?raw";
+
+const renderReadmeMarkdown = (markdown) => {
+  const formatInline = (text) => text
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*([^*]+)\*/g, "<em>$1</em>");
+
+  return markdown
+    .replace(/\r\n/g, "\n")
+    .trim()
+    .split(/\n\s*\n/)
+    .map((block) => {
+      const trimmed = block.trim();
+      if (!trimmed) return "";
+      if (trimmed.startsWith("### ")) return `<h3>${formatInline(trimmed.replace(/^###\s*/, ""))}</h3>`;
+      if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+        const items = trimmed
+          .split(/\n/)
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .map((line) => `<li>${formatInline(line.replace(/^[-*]\s*/, ""))}</li>`)
+          .join("");
+        return `<ul>${items}</ul>`;
+      }
+      if (trimmed.startsWith("<") && trimmed.endsWith(">")) return trimmed;
+      return `<p>${formatInline(trimmed)}</p>`;
+    })
+    .join("\n");
+};
 
 export default function App() {
   const [theme, setTheme] = useState(() => localStorage.getItem("nhs_theme") === "dark" ? "dark" : "light");
@@ -163,7 +193,12 @@ export default function App() {
     <section id="search_container"><div className="search_box"><i className="fa-solid fa-hashtag search_icon" /><input id="search_input" type="text" placeholder="Tìm kiếm theo mã ID (Ví dụ: #001, #002...)" autoComplete="off" value={search} onChange={(event) => setSearch(event.target.value)} /></div><div className="search_box"><i className="fa-regular fa-calendar-days search_icon" /><input id="search_date_input" type="text" placeholder="Tìm kiếm theo ngày (Ví dụ: #20/08/2026)" autoComplete="off" value={dateSearch} onChange={(event) => setDateSearch(event.target.value)} /></div></section>
     <main id="confession_list">{initialLoading ? <p style={{ textAlign: "center", color: "var(--text-muted)", padding: 20 }}>Đang tải...</p> : normal.length ? Object.entries(groups).map(([date, items]) => <div className="date_block" key={date}><div className="date_block_header">📅 Ngày {date}</div><div className="date_block_grid">{items.map((item) => <ConfessionCard key={item.uuid} confession={item} expanded={expandedId === String(item.uuid)} liked={liked.includes(String(item.uuid))} onOpen={setExpandedId} onClose={() => setExpandedId(null)} onLike={like} onComment={addComment} fetchComments={fetchComments} />)}</div></div>) : <p style={{ textAlign: "center", color: "var(--text-muted)", padding: 20 }}>{confessions.filter((item) => item.status !== "important").length ? "Không tìm thấy bài viết phù hợp với điều kiện tìm kiếm." : "Chưa có bài viết nào được phê duyệt."}</p>}</main>
   </div><div id="confession_backdrop" className={expandedId ? "active" : ""} onClick={() => setExpandedId(null)} />
-    <Modal open={readmeOpen} onClose={() => setReadmeOpen(false)}><button type="button" className="close_readme_btn" title="Đóng bảng hướng dẫn" onClick={() => setReadmeOpen(false)}><i className="fa-solid fa-xmark" /></button><h2><i className="fa-solid fa-book-open" style={{ color: "var(--accent-color)" }} /> Hướng dẫn sử dụng &amp; Giới thiệu</h2><div className="readme_body"><h3>📌 Về hệ thống</h3><p>Đây là một không gian ẩn danh, nơi mọi người có thể chia sẻ tâm tư, tình cảm và những câu chuyện xoay quanh cuộc sống học đường. NHSC Confessions được phát triển và vận hành độc lập bởi các cá nhân. Mọi nội dung đều được kiểm duyệt trước khi đăng tải theo quy định của nền tảng; tuy nhiên, những điều được chia sẻ có thể xuất phát từ góc nhìn và trải nghiệm riêng của mỗi người, nên không phải lúc nào cũng phản ánh đầy đủ hoặc chính xác sự việc. Hãy cân nhắc trước khi tiếp nhận, tin tưởng hoặc lan truyền bất kỳ thông tin nào.</p><h3>📝 Về nội dung bài viết</h3><p>Mọi người hoàn toàn có thể tự do chia sẻ suy nghĩ của mình, kể cả những ý kiến trái chiều hay phê bình. Tuy nhiên, mong các bạn thông cảm rằng vì một số lý do nhất định, chúng tôi không thể để mọi nội dung được đăng tải mà không có bất kỳ giới hạn nào. Vì vậy, với những vấn đề nhạy cảm hoặc dễ gây tranh cãi, hãy cố gắng diễn đạt một cách khéo léo và tôn trọng để bài viết có thể được xem xét và duyệt.</p><h3>🔍 Hướng dẫn tìm kiếm</h3><ul><li><strong>Tìm theo ID:</strong> Nhập mã định danh bài viết vào ô tìm kiếm (Ví dụ: <code>#001</code> hoặc <code>1</code>).</li><li><strong>Tìm theo Ngày:</strong> Nhập ngày đăng kèm ký tự # ở đầu (Ví dụ: <code>#20/08/2026</code>).</li></ul><h3>💬 Bình luận &amp; Tương tác</h3><ul><li>Nhấn vào bất kỳ bài viết nào để xem toàn bộ nội dung chi tiết và tham gia bình luận.</li><li>Thả biểu tượng cảm xúc (❤️) để bày tỏ sự yêu thích đối với bài viết.</li></ul><h3>⚠️ Lưu ý khi sử dụng</h3><p>Vì hệ thống chạy qua máy chủ trung gian nên đôi lúc sẽ bị chậm một chút khi có quá nhiều bạn truy cập cùng lúc. Nếu gửi bài hoặc tải trang bị chậm, bạn hãy kiên nhẫn đợi giây lát hoặc tải lại trang nhé!</p><button type="button" className="feedback_toggle_btn" onClick={() => { setReadmeOpen(false); setFeedbackOpen(true); }}><i className="fa-solid fa-comment-dots" /> Gửi góp ý</button><div className="project_author"><span>A project by</span><div><a href="https://github.com/Pythonisbest-spec" target="_blank" rel="noopener noreferrer"><i className="fa-brands fa-github" /> Pythonisbest-spec</a> &amp; <a href="https://github.com/ntk15509" target="_blank" rel="noopener noreferrer"><i className="fa-brands fa-github" /> ntk15509</a></div></div></div></Modal>
+    <Modal open={readmeOpen} onClose={() => setReadmeOpen(false)}>
+      <button type="button" className="close_readme_btn" title="Đóng bảng hướng dẫn" onClick={() => setReadmeOpen(false)}><i className="fa-solid fa-xmark" /></button>
+      <h2><i className="fa-solid fa-book-open" style={{ color: "var(--accent-color)" }} /> Hướng dẫn sử dụng &amp; Giới thiệu</h2>
+      <div className="readme_body" dangerouslySetInnerHTML={{ __html: renderReadmeMarkdown(readmeMarkdown) }} />
+      <button type="button" className="feedback_toggle_btn" onClick={() => { setReadmeOpen(false); setFeedbackOpen(true); }}><i className="fa-solid fa-comment-dots" /> Gửi góp ý</button>
+    </Modal>
     <Modal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} className="feedback_modal_content"><button type="button" className="close_readme_btn" title="Đóng bảng góp ý" onClick={() => setFeedbackOpen(false)}><i className="fa-solid fa-xmark" /></button><h2><i className="fa-solid fa-comment-dots" style={{ color: "var(--accent-color)" }} /> Gửi góp ý</h2><form className="feedback_form" autoComplete="off" onSubmit={submitFeedback}><label htmlFor="feedback_input">Chia sẻ góp ý của bạn</label><textarea id="feedback_input" rows="5" maxLength={MAX_LENGTH} placeholder="Nhập góp ý hoặc đề xuất của bạn..." value={feedback} onChange={(event) => { setFeedback(event.target.value); setFeedbackError(""); }} /><p id="feedback_error">{feedbackError}</p><button type="submit" id="feedback_submit_btn" disabled={feedbackLoading}>{feedbackLoading ? <><i className="fa-solid fa-spinner fa-spin" /> Đang gửi...</> : <><span>Gửi</span><i className="fa-solid fa-paper-plane" /></>}</button></form></Modal>
   </>;
 }
