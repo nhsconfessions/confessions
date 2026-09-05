@@ -540,8 +540,8 @@ h4 {
     left: 0;
     top: calc(100% + 8px);
     width: 100%;
-    background: #f8fafc;
-    border: 1.5px solid $card-border-light;
+    background: var(--card-bg);
+    border: 1.5px solid var(--card-border);
     border-radius: var(--radius-md);
     padding: 10px;
     max-height: 150px;
@@ -1128,10 +1128,6 @@ h4 {
   }
 }
 
-// ==========================================
-// 9. PROJECT AUTHOR & FEEDBACK
-// ==========================================
-
 .project_author {
   margin-top: 25px;
   padding-top: 15px;
@@ -1388,10 +1384,6 @@ h4 {
     transform: translate(-50%, -50%) scale(1);
   }
 }
-
-// ==========================================
-// 12. MEDIA QUERIES
-// ==========================================
 
 @media (max-width: 960px) {
   .date_block_grid {
