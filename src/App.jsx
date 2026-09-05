@@ -149,9 +149,10 @@ export default function App() {
     setConfessions((items) => items.map((item) => String(item.uuid) === String(uuid) ? { ...item, comments: comments || [] } : item));
   };
   const addComment = async (uuid, text) => {
+    if (!text.trim()) return;
     const comment = { content: text, time: new Date().toISOString() };
     setConfessions((items) => items.map((item) => String(item.uuid) === String(uuid) ? { ...item, comments: [...(item.comments || []), comment], commentCount: (item.commentCount || 0) + 1 } : item));
-    try { await post({ action: "comment", uuid: String(uuid), content: text }); } catch (commentError) { console.error("Comment submit error:", commentError); }
+    try { await post({ action: "comment", uuid: String(uuid), content: (text.trim().startsWith("=") ? `'${text}` : text) }); } catch (commentError) { console.error("Comment submit error:", commentError); }
   };
   const submitConfession = async (event) => {
     event.preventDefault();
@@ -167,8 +168,9 @@ export default function App() {
   const submitFeedback = async (event) => {
     event.preventDefault();
     if (!feedback.trim()) return setFeedbackError("Vui lòng nhập nội dung góp ý.");
+
     setFeedbackLoading(true);
-    try { await post({ action: "feedback", content: feedback.trim() }); setFeedback(""); setFeedbackError(""); setFeedbackOpen(false); alert("Cảm ơn bạn! Góp ý đã được gửi thành công."); }
+    try { await post({ action: "feedback", content: (feedback.trim().startsWith("=") ? `'${feedback}` : feedback)}); setFeedback(""); setFeedbackError(""); setFeedbackOpen(false); alert("Cảm ơn bạn! Góp ý đã được gửi thành công."); }
     catch (feedbackSubmitError) { console.error("Lỗi gửi góp ý:", feedbackSubmitError); setFeedbackError("Không thể gửi góp ý. Vui lòng thử lại sau."); }
     finally { setFeedbackLoading(false); }
   };
