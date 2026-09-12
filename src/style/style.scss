@@ -78,10 +78,6 @@ $radius-sm: 8px;
   --shadow-sm: #{$shadow-sm-dark};
   --shadow-md: #{$shadow-md-dark};
 
-  #picture img {
-    border-color: $card-border-dark;
-  }
-
   #chu_thich {
     background: rgba(159, 18, 57, 0.2);
     border-color: #9f1239;
@@ -383,7 +379,6 @@ body {
   object-fit: cover;
   border-radius: 50%;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border: 3px solid #ffffff;
   transition: transform 0.3s ease;
 
   &:hover {
