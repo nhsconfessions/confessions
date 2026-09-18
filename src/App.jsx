@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import MarkdownIt from "markdown-it";
 
 import { LIKED_KEY, MAX_LENGTH } from "./constants";
 import { formatDate, readStoredLikes } from "./utils";
@@ -10,47 +11,13 @@ import EmojiPicker from "./components/EmojiPicker";
 import Modal from "./components/Modal";
 
 import incognitoLogo from "./assets/incognito.svg";
-import readmeMarkdown from "./README.md?raw";
+import readmeMarkdownContent from "./README.md?raw";
 
-const renderReadmeMarkdown = (markdown) => {
-  const formatInline = (text) =>
-    text
-      .replace(/`([^`]+)`/g, "<code>$1</code>")
-      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-      .replace(/\*([^*]+)\*/g, "<em>$1</em>");
-
-  return markdown
-    .replace(/\r\n/g, "\n")
-    .trim()
-    .split(/\n\s*\n/)
-    .map((block) => {
-      const trimmed = block.trim();
-
-      if (!trimmed) return "";
-
-      if (trimmed.startsWith("### ")) {
-        return `<h3>${formatInline(trimmed.replace(/^###\s*/, ""))}</h3>`;
-      }
-
-      if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
-        const items = trimmed
-          .split(/\n/)
-          .map((line) => line.trim())
-          .filter(Boolean)
-          .map((line) => `<li>${formatInline(line.replace(/^[-*]\s*/, ""))}</li>`)
-          .join("");
-
-        return `<ul>${items}</ul>`;
-      }
-
-      if (trimmed.startsWith("<") && trimmed.endsWith(">")) {
-        return trimmed;
-      }
-
-      return `<p>${formatInline(trimmed)}</p>`;
-    })
-    .join("\n");
-};
+const readmeMarkdownParser = new MarkdownIt({
+  html: true,
+  breaks: true,
+  linkify: true
+});
 
 
 export default function App() {
@@ -712,7 +679,7 @@ export default function App() {
           <i className="fa-solid fa-book-open" style={{color:"var(--accent-color)"}}/>{" "}Hướng dẫn sử dụng & Giới thiệu
         </h2>
 
-        <div className="readme_body" dangerouslySetInnerHTML={{__html: renderReadmeMarkdown(readmeMarkdown)}}/>
+        <div className="readme_body" dangerouslySetInnerHTML={{__html: readmeMarkdownParser.render(readmeMarkdownContent)}}/>
 
         <button
           type="button"
