@@ -5,7 +5,6 @@
 ### 📝 Về nội dung bài viết
 - **Lưu ý về nội dung bài viết**:
   - Mọi người hoàn toàn có thể tự do chia sẻ suy nghĩ của mình, kể cả những ý kiến trái chiều hay phê bình. Tuy nhiên, mong các bạn thông cảm rằng vì một số lý do nhất định, chúng tôi không thể để mọi nội dung được đăng tải mà không có bất kỳ giới hạn nào. Vì vậy, với những vấn đề nhạy cảm hoặc dễ gây tranh cãi, hãy cố gắng diễn đạt một cách khéo léo và tôn trọng để bài viết có thể được xem xét và duyệt.
-  - Nội dung có dấu hiệu xúc phạm, công kích cá nhân, vu khống hoặc có thể gây ảnh hưởng tiêu cực đến người khác sẽ bị từ chối **ngay lập tức**.   
 - **Lưu ý khi yêu cầu xoá**: 
   - Các bạn có thể gửi yêu cầu xoá confession thông qua việc gửi confession, và về nội dung hãy ghi chính xác ID bài viết và thời gian đăng bài (VD: Yêu cầu xóa: Confession #367, thời gian: 9:11 ngày 26/7, lý do: <>). Để tránh việc xoá nhầm hoặc không thể xác định bài viết, vui lòng kiểm tra kỹ ID và thời gian trước khi gửi yêu cầu.   
   - Không được lợi dụng quy trình yêu cầu xoá để gây ảnh hưởng đến confession của người khác. Việc cố ý gửi yêu cầu xoá không chính xác, giả mạo lý do, spam yêu cầu hoặc sử dụng yêu cầu xoá như một cách để gây áp lực, ngăn cản, phá hoại hoặc can thiệp vào việc đăng tải và hiển thị confession của người khác là không được phép. 
