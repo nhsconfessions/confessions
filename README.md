@@ -92,146 +92,23 @@ created_at
 content
 ```
 
-The `feedback` table contains:
+The `feedback` table stores feedback submitted through the website, contains:
 
 ```text
 created_at
 content
 ```
 
-### 3. Create the Database Functions
-
-The frontend uses two PostgreSQL functions through Supabase RPC:
+The frontend also uses these database functions:
 
 ```text
 like_confession
 add_comment
 ```
 
-Run the following SQL in:
+These functions should be created with appropriate permissions and security settings.
 
-**Supabase Dashboard → SQL Editor → New Query**
-
-#### `like_confession`
-
-```sql
-CREATE OR REPLACE FUNCTION public.like_confession(p_uuid uuid)
-RETURNS json
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO 'public'
-AS $function$
-declare
-    new_likes integer;
-begin
-
-    update public.confessions
-    set likes = likes + 1
-    where uuid = p_uuid
-    returning likes into new_likes;
-
-    if not found then
-        return json_build_object(
-            'status', 'error',
-            'message', 'Confession not found'
-        );
-    end if;
-
-    return json_build_object(
-        'status', 'success',
-        'likes', new_likes
-    );
-
-end;
-$function$;
-```
-
-#### `add_comment`
-
-```sql
-CREATE OR REPLACE FUNCTION public.add_comment(
-    p_uuid uuid,
-    p_content text
-)
-RETURNS json
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO 'public'
-AS $function$
-declare
-    new_comment public.comments;
-begin
-
-    if p_uuid is null then
-        return json_build_object(
-            'status', 'error',
-            'message', 'UUID is required'
-        );
-    end if;
-
-    if p_content is null
-       or length(trim(p_content)) = 0 then
-        return json_build_object(
-            'status', 'error',
-            'message', 'Content is required'
-        );
-    end if;
-
-    if not exists (
-        select 1
-        from public.confessions
-        where uuid = p_uuid
-    ) then
-        return json_build_object(
-            'status', 'error',
-            'message', 'Confession not found'
-        );
-    end if;
-
-    insert into public.comments (
-        uuid,
-        content
-    )
-    values (
-        p_uuid,
-        p_content
-    )
-    returning * into new_comment;
-
-    return json_build_object(
-        'status', 'success',
-        'comment', json_build_object(
-            'id', new_comment.id,
-            'uuid', new_comment.uuid,
-            'content', new_comment.content,
-            'time', new_comment.created_at
-        )
-    );
-
-end;
-$function$;
-```
-
-These functions are used by the frontend as:
-
-```javascript
-supabase.rpc("like_confession", {
-    p_uuid: confessionUuid
-});
-```
-
-and:
-
-```javascript
-supabase.rpc("add_comment", {
-    p_uuid: confessionUuid,
-    p_content: commentContent
-});
-```
-
-> **Security note:** Both functions use `SECURITY DEFINER`, so review their permissions carefully before deploying a public instance. Do not expose the Supabase service-role key to the browser.
-
-### 4. Enable Realtime
+### 3. Enable Realtime
 
 The frontend uses **Supabase Realtime** to receive database changes.
 
@@ -244,7 +121,7 @@ comments
 
 This allows updates to appear without requiring a full page refresh.
 
-### 5. Configure Row Level Security
+### 4. Configure Row Level Security
 
 When Row Level Security is enabled, create policies that allow only the required operations.
 
@@ -278,11 +155,11 @@ VITE_SUPABASE_ANON_KEY=your-public-client-key
 
 Replace the example values with those from your Supabase project.
 
-Do **not** put secret keys in these variables when they will be exposed to the Vite frontend.
+Do **not** put secret keys in this file when they will be exposed to the Vite frontend.
 
 ## Development
 
-Start the Vite development server:
+Start the development server:
 
 ```bash
 npm run dev
