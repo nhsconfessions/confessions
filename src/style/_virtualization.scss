@@ -1,16 +1,5 @@
 @use "variables" as *;
 
-.virtual_confession_list {
-  width: 100%;
-  min-width: 0;
-  position: relative;
-}
-
-.virtual_confession_row {
-  width: 100%;
-  min-width: 0;
-}
-
 .virtual_date_header {
   background: var(--card-bg);
   border: 2px solid var(--card-border);
@@ -36,13 +25,27 @@
   align-items: stretch;
 }
 
+
+.virtual_confession_list {
+  width: 100%;
+  min-width: 0;
+  position: relative;
+}
+
+.virtual_confession_row {
+  width: 100%;
+  min-width: 0;
+}
+
+.virtual_confession_row > .date_block {
+  margin-bottom: 0;
+}
+
 .virtual_loading_more {
   display: flex;
-  justify-content: center;
   align-items: center;
-
-  min-height: 44px;
-
+  justify-content: center;
+  min-height: 48px;
   color: var(--text-muted);
   font-size: 0.85rem;
 }

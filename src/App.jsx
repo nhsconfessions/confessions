@@ -97,6 +97,7 @@ export default function App() {
   const [scrollMargin, setScrollMargin] = useState(0);
 
   const listRef = useRef(null);
+  const firstLoadRef = useRef(true);
   const offsetRef = useRef(0);
   const loadingMoreRef = useRef(false);
   const requestIdRef = useRef(0);
@@ -154,26 +155,57 @@ export default function App() {
   }, []);
 
   const fetchConfessionPage = useCallback(
-    async ({ query, dateQuery, offset, limit = PAGE_SIZE }) => {
-      const { data, error: rpcError } = await supabase.rpc(
-        "search_confessions",
-        {
-          p_query: query,
-          p_date_query: dateQuery,
-          p_limit: limit,
-          p_offset: offset
-        }
+  async ({ query, dateQuery, offset, limit = PAGE_SIZE }) => {
+    if (!query && !dateQuery) {
+      const { data, count, error } = await supabase
+        .from("confessions")
+        .select(
+          "uuid, created_at, content, status, likes, comment_count, last_updated",
+          { count: "exact" }
+        )
+        .eq("status", "approved")
+        .order("created_at", { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (error) throw error;
+
+      const total = count || 0;
+
+      const rows = (data || []).map((item, index) =>
+        normalizeConfession({
+          ...item,
+          display_number: total - offset - index
+        })
       );
 
-      if (rpcError) throw rpcError;
-
-      const total = Array.isArray(data) && data.length > 0 ? Number(data[0].total_count) || 0 : 0;
-      const rows = Array.isArray(data) ? data.map(normalizeConfession) : [];
-
       return { rows, total };
-    },
-    []
-  );
+    }
+
+    const { data, error } = await supabase.rpc(
+      "search_confessions",
+      {
+        p_query: query,
+        p_date_query: dateQuery,
+        p_limit: limit,
+        p_offset: offset
+      }
+    );
+
+    if (error) throw error;
+
+    const total =
+      Array.isArray(data) && data.length > 0
+        ? Number(data[0].total_count) || 0
+        : 0;
+
+    const rows = Array.isArray(data)
+      ? data.map(normalizeConfession)
+      : [];
+
+    return { rows, total };
+  },
+  []
+);
 
   const fetchAnnouncements = useCallback(async () => {
     const { data, error: announcementError } = await supabase
@@ -196,58 +228,79 @@ export default function App() {
   }, []);
 
   const reloadList = useCallback(
-    async (query, dateQuery) => {
-      const requestId = ++requestIdRef.current;
+  async (query, dateQuery) => {
+    const requestId = ++requestIdRef.current;
 
-      activeQueryRef.current = {query, dateQuery};
+    activeQueryRef.current = {
+      query,
+      dateQuery
+    };
 
-      offsetRef.current = 0;
-      setInitialLoading(true);
-      setLoadError("");
+    offsetRef.current = 0;
+    setInitialLoading(true);
+    setLoadError("");
 
-      try {
-        const [confessionPage, announcementRows] = await Promise.all([
-          fetchConfessionPage({
-            query,
-            dateQuery,
-            offset: 0,
-            limit: PAGE_SIZE
-          }),
-          fetchAnnouncements()
-        ]);
+    const announcementPromise = fetchAnnouncements().catch(error => {
+      console.error("Announcement load error:", error);
+      return null;
+    });
 
-        if (requestId !== requestIdRef.current) return;
+    try {
+      const confessionPage = await fetchConfessionPage({
+        query,
+        dateQuery,
+        offset: 0,
+        limit: PAGE_SIZE
+      });
 
-        setConfessions(confessionPage.rows);
+      if (requestId !== requestIdRef.current) return;
+
+      setConfessions(confessionPage.rows);
+      setTotalCount(confessionPage.total);
+      offsetRef.current = confessionPage.rows.length;
+      setHasMore(offsetRef.current < confessionPage.total);
+      setInitialLoading(false);
+
+      const announcementRows = await announcementPromise;
+
+      if (requestId !== requestIdRef.current) return;
+      if (announcementRows) {
         setAnnouncements(announcementRows);
-        setTotalCount(confessionPage.total);
-
-        offsetRef.current = confessionPage.rows.length;
-
-        setHasMore(offsetRef.current < confessionPage.total);
-      } catch (loadErrorValue) {
-        console.error("Supabase load error:", loadErrorValue);
-
-        if (requestId === requestIdRef.current) {
-          setLoadError("Không thể tải dữ liệu. Vui lòng thử lại sau.");
-        }
-      } finally {
-        if (requestId === requestIdRef.current) {
-          setInitialLoading(false);
-        }
       }
-    },
-    [fetchConfessionPage, fetchAnnouncements]
-  );
+    } catch (error) {
+      console.error("Supabase load error:", error);
+
+      if (requestId === requestIdRef.current) {
+        setLoadError(
+          "Không thể tải dữ liệu. Vui lòng thử lại sau."
+        );
+        setInitialLoading(false);
+      }
+    }
+  },
+  [fetchConfessionPage, fetchAnnouncements]
+);
 
   useEffect(() => {
-    const query = normalizeQuery(search);
-    const dateQuery = normalizeQuery(dateSearch);
+  const query = normalizeQuery(search);
+  const dateQuery = normalizeQuery(dateSearch);
 
-    const timer = setTimeout(() => { reloadList(query, dateQuery); }, 300);
+  if (firstLoadRef.current) {
+    firstLoadRef.current = false;
+    reloadList(query, dateQuery);
+    return;
+  }
 
-    return () => clearTimeout(timer);
-  }, [search, dateSearch, reloadList]);
+  const timer = setTimeout(() => {
+    reloadList(query, dateQuery);
+  }, 300);
+
+  return () => clearTimeout(timer);
+}, [
+  search,
+  dateSearch,
+  reloadList
+]);
 
   const loadMore = useCallback(async () => {
     if (loadingMoreRef.current || !hasMore) return;
@@ -525,59 +578,72 @@ export default function App() {
   );
 
   const virtualRows = useMemo(() => {
-    const rows = [];
-    let currentDate = null;
-    let currentCardRow = null;
+  const rows = [];
+  let currentDate = null;
+  let currentGroup = null;
 
-    for (const item of confessions) {
-      const date = item.dateLabel || (item.time ? formatDate(item.time) : "Khác");
+  for (const item of confessions) {
+    const date =
+      item.dateLabel ||
+      (item.time ? formatDate(item.time) : "Khác");
 
-      if (date !== currentDate) {
-        currentDate = date;
-        rows.push({type: "date", key: `date:${date}`, date});
-        currentCardRow = null;
-      }
-
-      if (!currentCardRow || currentCardRow.items.length >= columns) {
-        currentCardRow = {
-          type: "cards",
-          key: `cards:${date}:${item.uuid}`,
-          items: []
-        };
-
-        rows.push(currentCardRow);
-      }
-
-      currentCardRow.items.push(item);
+    if (date !== currentDate) {
+      currentDate = date;
+      currentGroup = {
+        type: "date",
+        key: `date:${date}`,
+        date,
+        items: []
+      };
+      rows.push(currentGroup);
     }
 
-    if (hasMore) {
-      rows.push({type: "loader", key: "loader"});
-    }
+    currentGroup.items.push(item);
+  }
 
-    return rows;
-  }, [confessions, columns, hasMore]);
+  if (hasMore) {
+    rows.push({
+      type: "loader",
+      key: "loader"
+    });
+  }
+
+  return rows;
+}, [confessions, hasMore]);
 
   const virtualizer = useWindowVirtualizer({
-  count: virtualRows.length,
-  estimateSize: index => {
-    const row = virtualRows[index];
+    count: virtualRows.length,
+    estimateSize: index => {
+  const row = virtualRows[index];
 
-    if (row?.type === "date") {
-      return 58;
-    }
+  if (row?.type === "loader") {
+    return 64;
+  }
 
-    if (row?.type === "loader") {
-      return 64;
-    }
+  if (row?.type === "date") {
+    const cardHeight =
+      columns === 1 ? 250 : 240;
 
-    return columns === 1 ? 272 : 262;
-  },
-  overscan: 5,
-  scrollMargin,
-  getItemKey: index =>
-    virtualRows[index]?.key ?? index
-});
+    const gap = 16;
+    const rows =
+      Math.ceil(row.items.length / columns);
+
+    return (
+      20 +
+      42 +
+      rows * cardHeight +
+      Math.max(0, rows - 1) * gap +
+      20
+    );
+  }
+
+  return 250;
+},
+    overscan: 5,
+    scrollMargin,
+    getItemKey: index =>
+      virtualRows[index]?.key ?? index
+  });
 
   const virtualItems = virtualizer.getVirtualItems();
 
@@ -864,45 +930,53 @@ export default function App() {
                     return (
                       
                       <div
-  key={virtualItem.key}
-  data-index={virtualItem.index}
-  ref={virtualizer.measureElement}
-  style={{
-    position: "absolute",
-    top:
-      virtualItem.start -
-      virtualizer.options.scrollMargin,
-    left: 0,
-    width: "100%",
-    paddingBottom: 22
-  }}
->
+                        key={virtualItem.key}
+                        data-index={virtualItem.index}
+                        ref={virtualizer.measureElement}
+                        style={{
+                          position: "absolute",
+                          top:
+                            virtualItem.start -
+                            virtualizer.options.scrollMargin,
+                          left: 0,
+                          width: "100%",
+                          paddingBottom: 22
+                        }}
+                      >
                         {row.type === "date" && (
-                          <div className="date_block_header">
-                            📅 Ngày {row.date}
-                          </div>
-                        )}
+                          <div className="date_block">
+                            <div className="date_block_header">
+                              <span>📅 Ngày {row.date}</span>
+                            </div>
 
-                        {row.type === "cards" && (
-                          <div
-                            className="date_block_grid"
-                            style={{
-                              gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`
-                            }}
-                          >
-                            {row.items.map(item => (
-                              <ConfessionCard
-                                key={item.uuid}
-                                confession={item}
-                                expanded={expandedId === String(item.uuid)}
-                                liked={liked.includes(String(item.uuid))}
-                                onOpen={setExpandedId}
-                                onClose={() => setExpandedId(null)}
-                                onLike={like}
-                                onComment={addComment}
-                                fetchComments={fetchComments}
-                              />
-                            ))}
+                            <div
+                              className="date_block_grid"
+                              style={{
+                                gridTemplateColumns:
+                                  `repeat(${columns}, minmax(0, 1fr))`
+                              }}
+                            >
+                              {row.items.map(item => (
+                                <ConfessionCard
+                                  key={item.uuid}
+                                  confession={item}
+                                  expanded={
+                                    expandedId ===
+                                    String(item.uuid)
+                                  }
+                                  liked={liked.includes(
+                                    String(item.uuid)
+                                  )}
+                                  onOpen={setExpandedId}
+                                  onClose={() =>
+                                    setExpandedId(null)
+                                  }
+                                  onLike={like}
+                                  onComment={addComment}
+                                  fetchComments={fetchComments}
+                                />
+                              ))}
+                            </div>
                           </div>
                         )}
 
