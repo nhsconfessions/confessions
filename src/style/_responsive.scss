@@ -1,0 +1,97 @@
+@use "variables" as *;
+
+@media (max-width: 960px) {
+  .date_block_grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    padding: 16px 10px 40px;
+  }
+
+  .hero_section {
+    padding: 65px 16px 20px;
+    align-items: center;
+  }
+
+  #readme_toggle_btn,
+  #theme_toggle_btn {
+    position: absolute;
+    top: 14px;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+  }
+
+  #readme_toggle_btn {
+    left: 14px;
+  }
+
+  #theme_toggle_btn {
+    right: 14px;
+  }
+
+  .header_titles h1 {
+    font-size: 1.75rem;
+  }
+
+  #search_container {
+    grid-template-columns: 1fr;
+  }
+
+  #confession_form {
+    .input_group {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    button[type="submit"] {
+      justify-content: center;
+      padding: 11px;
+      height: auto;
+    }
+  }
+
+  .date_block_grid {
+    grid-template-columns: 1fr;
+  }
+
+  .box {
+    height: 250px;
+  }
+
+  .announcement_wrapper {
+    padding: 16px 0;
+  }
+
+  .announcement_carousel_track {
+    width: 100%;
+    padding: 8px 4px;
+
+    .announcement_box {
+      flex-basis: 100%;
+      width: 100%;
+    }
+  }
+
+  .announcement_wrapper > .carousel_btn {
+    position: absolute;
+    top: 50%;
+    margin: 0;
+    transform: translateY(-50%);
+
+    &:hover {
+      transform: translateY(-50%) scale(1.1);
+    }
+  }
+
+  .announcement_wrapper > .prev_btn {
+    left: 8px;
+  }
+
+  .announcement_wrapper > .next_btn {
+    right: 8px;
+  }
+}
+
