@@ -1,24 +1,17 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState
-} from "react";
-import { useWindowVirtualizer } from "@tanstack/react-virtual";
+import { useEffect, useMemo, useState } from "react";
 import MarkdownIt from "markdown-it";
+
 import { LIKED_KEY, MAX_LENGTH } from "./constants";
 import { formatDate, readStoredLikes } from "./utils";
 import { supabase } from "./supabase";
+
 import Announcements from "./components/Announcements";
 import ConfessionCard from "./components/ConfessionCard";
 import EmojiPicker from "./components/EmojiPicker";
 import Modal from "./components/Modal";
+
 import incognitoLogo from "./assets/incognito.svg";
 import readmeMarkdownContent from "./README.md?raw";
-
-const PAGE_SIZE = 60;
 
 const readmeMarkdownParser = new MarkdownIt({
   html: true,
@@ -26,84 +19,34 @@ const readmeMarkdownParser = new MarkdownIt({
   linkify: true
 });
 
-function getColumnCount() {
-  if (typeof window === "undefined") return 3;
-  if (window.innerWidth >= 1100) return 3;
-  if (window.innerWidth >= 700) return 2;
-  return 1;
-}
-
-function normalizeQuery(value) {
-  return String(value || "").replace("#", "").trim();
-}
-
-function normalizeConfession(item) {
-  return {
-    uuid: String(item.uuid),
-    status: item.status || "approved",
-    content: item.content || "",
-    time: item.created_at,
-    likes: Number(item.likes) || 0,
-    commentCount: Number(item.comment_count) || 0,
-    lastUpdated: item.last_updated ? new Date(item.last_updated).getTime() : Date.now(),
-    comments: null,
-    number: Number(item.display_number) || 0,
-    dateLabel:
-      item.date_label ||
-      (item.created_at ? formatDate(item.created_at) : "Khác")
-  };
-}
-
-function normalizeAnnouncement(item) {
-  return {
-    uuid: String(item.uuid),
-    status: item.status || "important",
-    content: item.content || "",
-    time: item.created_at,
-    likes: Number(item.likes) || 0,
-    commentCount: Number(item.comment_count) || 0,
-    lastUpdated: item.last_updated
-      ? new Date(item.last_updated).getTime()
-      : Date.now(),
-    comments: null
-  };
-}
 
 export default function App() {
-  const [theme, setTheme] = useState(() =>
-    localStorage.getItem("nhs_theme") === "dark" ? "dark" : "light"
-  );
+  const [theme, setTheme] = useState(() => localStorage.getItem("nhs_theme") === "dark" ? "dark" : "light");
+
   const [confessions, setConfessions] = useState([]);
-  const [announcements, setAnnouncements] = useState([]);
+
   const [liked, setLiked] = useState(readStoredLikes);
+
   const [expandedId, setExpandedId] = useState(null);
+
   const [search, setSearch] = useState("");
   const [dateSearch, setDateSearch] = useState("");
+
   const [readmeOpen, setReadmeOpen] = useState(false);
+
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [feedbackError, setFeedbackError] = useState("");
   const [feedbackLoading, setFeedbackLoading] = useState(false);
-  const [content, setContent] = useState("");
-  const [mainEmojiOpen, setMainEmojiOpen] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [loadError, setLoadError] = useState("");
-  const [formError, setFormError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [totalCount, setTotalCount] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [columns, setColumns] = useState(getColumnCount);
-  const [scrollMargin, setScrollMargin] = useState(0);
 
-  const listRef = useRef(null);
-  const offsetRef = useRef(0);
-  const loadingMoreRef = useRef(false);
-  const requestIdRef = useRef(0);
-  const activeQueryRef = useRef({
-    query: "",
-    dateQuery: ""
-  });
+  const [content, setContent] = useState("");
+
+  const [mainEmojiOpen, setMainEmojiOpen] = useState(false);
+
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (theme === "dark") {
@@ -119,64 +62,18 @@ export default function App() {
       "confession-modal-open",
       Boolean(expandedId || readmeOpen || feedbackOpen)
     );
+
     return () => {
       document.body.classList.remove("confession-modal-open");
     };
-  }, [expandedId, readmeOpen, feedbackOpen]);
+  }, [
+    expandedId,
+    readmeOpen,
+    feedbackOpen
+  ]);
 
-  useEffect(() => {
-    const handleResize = () => setColumns(getColumnCount());
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  useLayoutEffect(() => {
-    const updateScrollMargin = () => {
-      const next = listRef.current?.offsetTop ?? 0;
-      setScrollMargin(current => (current === next ? current : next));
-    };
-
-    updateScrollMargin();
-    window.addEventListener("resize", updateScrollMargin);
-
-    const element = listRef.current;
-    const observer = element ? new ResizeObserver(updateScrollMargin) : null;
-
-    if (observer && element) {
-      observer.observe(element);
-    }
-
-    return () => {
-      window.removeEventListener("resize", updateScrollMargin);
-      observer?.disconnect();
-    };
-  }, []);
-
-  const fetchConfessionPage = useCallback(
-    async ({ query, dateQuery, offset, limit = PAGE_SIZE }) => {
-      const { data, error: rpcError } = await supabase.rpc(
-        "search_confessions",
-        {
-          p_query: query,
-          p_date_query: dateQuery,
-          p_limit: limit,
-          p_offset: offset
-        }
-      );
-
-      if (rpcError) throw rpcError;
-
-      const total = Array.isArray(data) && data.length > 0 ? Number(data[0].total_count) || 0 : 0;
-      const rows = Array.isArray(data) ? data.map(normalizeConfession) : [];
-
-      return { rows, total };
-    },
-    []
-  );
-
-  const fetchAnnouncements = useCallback(async () => {
-    const { data, error: announcementError } = await supabase
+  const load = async () => {
+    const { data, error: loadError } = await supabase
       .from("confessions")
       .select(`
         uuid,
@@ -185,168 +82,86 @@ export default function App() {
         status,
         likes,
         comment_count,
-        last_updated
+        last_updated,
+        comments (
+          id,
+          content,
+          created_at
+        )
       `)
-      .eq("status", "important")
-      .order("created_at", { ascending: false });
+      .in("status", ["approved", "important"])
+      .order("created_at", {ascending: true});
 
-    if (announcementError) throw announcementError;
-
-    return Array.isArray(data) ? data.map(normalizeAnnouncement) : [];
-  }, []);
-
-  const reloadList = useCallback(
-    async (query, dateQuery) => {
-      const requestId = ++requestIdRef.current;
-
-      activeQueryRef.current = {query, dateQuery};
-
-      offsetRef.current = 0;
-      setInitialLoading(true);
-      setLoadError("");
-
-      try {
-        const [confessionPage, announcementRows] = await Promise.all([
-          fetchConfessionPage({
-            query,
-            dateQuery,
-            offset: 0,
-            limit: PAGE_SIZE
-          }),
-          fetchAnnouncements()
-        ]);
-
-        if (requestId !== requestIdRef.current) return;
-
-        setConfessions(confessionPage.rows);
-        setAnnouncements(announcementRows);
-        setTotalCount(confessionPage.total);
-
-        offsetRef.current = confessionPage.rows.length;
-
-        setHasMore(offsetRef.current < confessionPage.total);
-      } catch (loadErrorValue) {
-        console.error("Supabase load error:", loadErrorValue);
-
-        if (requestId === requestIdRef.current) {
-          setLoadError("Không thể tải dữ liệu. Vui lòng thử lại sau.");
-        }
-      } finally {
-        if (requestId === requestIdRef.current) {
-          setInitialLoading(false);
-        }
-      }
-    },
-    [fetchConfessionPage, fetchAnnouncements]
-  );
-
-  useEffect(() => {
-    const query = normalizeQuery(search);
-    const dateQuery = normalizeQuery(dateSearch);
-
-    const timer = setTimeout(() => { reloadList(query, dateQuery); }, 300);
-
-    return () => clearTimeout(timer);
-  }, [search, dateSearch, reloadList]);
-
-  const loadMore = useCallback(async () => {
-    if (loadingMoreRef.current || !hasMore) return;
-
-    loadingMoreRef.current = true;
-    setLoadingMore(true);
-
-    const requestId = requestIdRef.current;
-    const { query, dateQuery } = activeQueryRef.current;
-    const offset = offsetRef.current;
-
-    try {
-      const page = await fetchConfessionPage({
-        query,
-        dateQuery,
-        offset,
-        limit: PAGE_SIZE
-      });
-
-      if (requestId !== requestIdRef.current) return;
-
-      setConfessions(current => {
-        const existing = new Set(
-          current.map(item => String(item.uuid))
-        );
-
-        const newRows = page.rows.filter(
-          item => !existing.has(String(item.uuid))
-        );
-
-        return [...current, ...newRows];
-      });
-
-      offsetRef.current = offset + page.rows.length;
-      setTotalCount(page.total);
-      setHasMore(offsetRef.current < page.total);
-    } catch (loadMoreError) {
-      console.error("Load more error:", loadMoreError);
-    } finally {
-      loadingMoreRef.current = false;
-      setLoadingMore(false);
+    if (loadError) {
+      throw loadError;
     }
-  }, [hasMore, fetchConfessionPage]);
 
-  const refreshLoaded = useCallback(async () => {
-    const requestId = ++requestIdRef.current;
-    const { query, dateQuery } = activeQueryRef.current;
-    const currentlyLoaded = Math.max(PAGE_SIZE, offsetRef.current);
+    const normalized = (data || []).map(
+      (item) => ({
+        uuid: String(item.uuid),
+        status: item.status || "approved",
+        content: item.content || "",
+        time: item.created_at,
+        likes: Number(item.likes) || 0,
+        commentCount: Number(item.comment_count) || 0,
+        lastUpdated:item.last_updated ? new Date(item.last_updated).getTime() : Date.now(),
+        comments:
+          Array.isArray(item.comments)
+            ? [...item.comments]
+              .sort(
+                (a, b) => new Date(a.created_at) - new Date(b.created_at)
+              )
+              .map((comment) => ({
+                id: comment.id,
+                content: comment.content || "",
+                time: comment.created_at
+              }))
+            : []
+      })
+    );
 
-    try {
-      const [confessionPage, announcementRows] = await Promise.all([
-        fetchConfessionPage({
-          query,
-          dateQuery,
-          offset: 0,
-          limit: currentlyLoaded
-        }),
-        fetchAnnouncements()
-      ]);
-
-      if (requestId !== requestIdRef.current) return;
-
-      setConfessions(confessionPage.rows);
-      setAnnouncements(announcementRows);
-      setTotalCount(confessionPage.total);
-
-      offsetRef.current = confessionPage.rows.length;
-
-      setHasMore(
-        offsetRef.current < confessionPage.total
-      );
-    } catch (refreshError) {
-      console.error("Refresh error:", refreshError);
-    }
-  }, [fetchConfessionPage, fetchAnnouncements]);
+    setConfessions(normalized);
+  };
 
   useEffect(() => {
     let cancelled = false;
     let timer = null;
 
     const poll = async () => {
-      if (cancelled) return;
+      try {
+        await load();
 
-      await refreshLoaded();
+        if (!cancelled) {
+          setError("");
+        }
+      } catch (loadError) {
+        console.error("Supabase load error:", loadError);
+
+        if (!cancelled) {
+          setError("Không thể tải dữ liệu. Vui lòng thử lại sau.");
+        }
+      } finally {
+        if (!cancelled) {
+          setInitialLoading(false);
+        }
+      }
 
       if (!cancelled) {
         timer = setTimeout(poll, 15000);
       }
     };
 
-    timer = setTimeout(poll, 15000);
+    poll();
 
-    const visibilityHandler = () => {
+    const visibility = () => {
       if (!document.hidden) {
-        refreshLoaded();
+        load().catch((refreshError) => {
+          console.error("Refresh error:", refreshError);
+        });
       }
     };
 
-    document.addEventListener("visibilitychange", visibilityHandler);
+    document.addEventListener("visibilitychange",visibility);
 
     return () => {
       cancelled = true;
@@ -355,270 +170,275 @@ export default function App() {
         clearTimeout(timer);
       }
 
-      document.removeEventListener("visibilitychange", visibilityHandler);
+      document.removeEventListener( "visibilitychange",visibility);
     };
-  }, [refreshLoaded]);
+  }, []);
 
   useEffect(() => {
     const channel = supabase
       .channel("public-confessions")
-      .on(
-        "postgres_changes",
+      .on("postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "confessions"
         },
         () => {
-          refreshLoaded().catch(error => {
-            console.error("Realtime confession refresh error:", error);
+          load().catch((error) => {
+            console.error("Realtime refresh error:",error);
           });
         }
       )
-      .on(
-        "postgres_changes",
+      .on("postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "comments"
         },
         () => {
-          refreshLoaded().catch(error => {
+          load().catch((error) => {
             console.error("Realtime comment refresh error:", error);
           });
         }
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
-  }, [refreshLoaded]);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
-  const fetchComments = useCallback(async uuid => {
+  const normal = useMemo(() => {
+    const sorted = confessions
+      .filter((item) => item.status !== "important")
+      .sort((a, b) => new Date(a.time) - new Date(b.time))
+      .map((item, index) => ({
+        ...item,
+        number: index + 1
+      }));
+
+    const query = search.replace("#", "").trim();
+    const dateQuery = dateSearch.replace("#", "").trim();
+
+    return sorted
+      .filter((item) => {
+        const matchesId =
+          !query ||
+          String(item.number)
+            .padStart(3, "0")
+            .includes(query) ||
+          String(item.number)
+            .includes(query);
+
+        if (!dateQuery) {
+          return matchesId;
+        }
+
+        const formattedDate = formatDate(item.time).toLowerCase();
+
+        return (
+          matchesId &&
+          formattedDate.includes(
+            dateQuery.toLowerCase()
+          )
+        );
+      })
+      .sort((a, b) => b.number - a.number);
+  }, [
+    confessions,
+    search,
+    dateSearch
+  ]);
+
+  const announcements = useMemo(
+    () =>
+      confessions
+        .filter( (item) => item.status === "important" )
+        .sort( (a, b) => new Date(b.time) - new Date(a.time) ),
+    [confessions]
+  );
+
+  const groups = useMemo(
+    () =>
+      normal.reduce(
+        (result, item) => {
+          const key = item.time ? formatDate(item.time) : "Khác";
+          (result[key] ||= []).push(item);
+          return result;
+        },
+        {}
+      ),
+    [normal]
+  );
+
+  const like = async (uuid) => {
+    const id = String(uuid);
+
+    if (liked.includes(id)) {
+      return;
+    }
+
+    const nextLiked = [...liked, id];
+
+    setLiked(nextLiked);
+
+    localStorage.setItem(
+      LIKED_KEY,
+      JSON.stringify(nextLiked)
+    );
+
+    setConfessions((items) =>
+      items.map((item) =>
+        String(item.uuid) === id
+          ? {
+            ...item,
+            likes: (item.likes || 0) + 1
+          }
+          : item
+      )
+    );
+
     try {
-      const { data, error: commentsError } = await supabase
+      const {data,error: likeError} = await supabase.rpc( "like_confession",{ p_uuid: id});
+
+      if (likeError) {
+        throw likeError;
+      }
+
+      if (data && typeof data.likes === "number") {
+        setConfessions((items) =>
+          items.map((item) =>
+            String(item.uuid) === id
+              ? {...item, likes: data.likes}
+              : item
+          )
+        );
+      }
+    } catch (likeError) {
+      console.error( "Lỗi cập nhật lượt thích:", likeError );
+      setLiked((current) =>
+        current.filter((value) => value !== id)
+      );
+
+      localStorage.setItem(
+        LIKED_KEY,
+        JSON.stringify(liked)
+      );
+
+      setConfessions((items) =>
+        items.map((item) =>
+          String(item.uuid) === id
+            ? {
+              ...item,
+              likes: Math.max(0, (item.likes || 1) - 1)
+            }
+            : item
+        )
+      );
+    }
+  };
+  const fetchComments = async (uuid) => {
+    try {
+      const {data, error: commentsError} = await supabase
         .from("comments")
         .select("id, content, created_at")
         .eq("uuid", uuid)
-        .order("created_at", { ascending: true });
+        .order("created_at", {ascending: true});
 
-      if (commentsError) throw commentsError;
+      if (commentsError) {
+        throw commentsError;
+      }
 
-      const comments = Array.isArray(data) ? data.map(comment => ({
+      const comments = (data || []).map((comment) => ({
         id: comment.id,
         content: comment.content || "",
         time: comment.created_at
-      })) : [];
+      }));
 
-      setConfessions(items =>
-        items.map(item => String(item.uuid) === String(uuid) ? {
-          ...item,
-          comments,
-          commentCount: comments.length
-        } : item)
+      setConfessions((items) =>
+        items.map((item) =>
+          String(item.uuid) ===
+            String(uuid)
+            ? {
+              ...item,
+              comments,
+              commentCount: comments.length
+            }
+            : item
+        )
       );
     } catch (commentsError) {
       console.error("Comments request failed:", commentsError);
-      throw commentsError;
     }
-  }, []);
+  };
 
-  const like = useCallback(
-    async uuid => {
-      const id = String(uuid);
+  const addComment = async (uuid, text) => {
+    const value = text.trim();
 
-      if (liked.includes(id)) return;
+    if (!value) {return;}
 
-      const nextLiked = [...liked, id];
-
-      setLiked(nextLiked);
-      localStorage.setItem(LIKED_KEY, JSON.stringify(nextLiked));
-
-      setConfessions(items =>
-        items.map(item => String(item.uuid) === id ? {
-          ...item,
-          likes: (item.likes || 0) + 1
-        } : item)
-      );
-
-      setAnnouncements(items =>
-        items.map(item => String(item.uuid) === id ? {
-          ...item,
-          likes: (item.likes || 0) + 1
-        } : item)
-      );
-
-      try {
-        const { data, error: likeError } = await supabase.rpc("like_confession", {p_uuid: id});
-
-        if (likeError) throw likeError;
-
-        if (data && typeof data.likes === "number") {
-          setConfessions(items =>
-            items.map(item => String(item.uuid) === id ? {
-              ...item,
-              likes: data.likes
-            } : item)
-          );
-
-          setAnnouncements(items =>
-            items.map(item => String(item.uuid) === id ? {...item, likes: data.likes}: item)
-          );
+    try {
+      const {data, error: commentError} = await supabase.rpc(
+        "add_comment",
+        {
+          p_uuid: uuid,
+          p_content: value
         }
-      } catch (likeError) {
-        console.error("Lỗi cập nhật lượt thích:", likeError);
+      );
 
-        setLiked(current => current.filter(value => value !== id));
-
-        localStorage.setItem(LIKED_KEY, JSON.stringify(liked));
-
-        setConfessions(items =>
-          items.map(item => String(item.uuid) === id ? {
-            ...item,
-            likes: Math.max(0, (item.likes || 1) - 1)
-          } : item)
-        );
-
-        setAnnouncements(items =>
-          items.map(item => String(item.uuid) === id ? {
-            ...item,
-            likes: Math.max(0, (item.likes || 1) - 1)
-          } : item)
-        );
-      }
-    },
-    [liked]
-  );
-
-  const addComment = useCallback(
-    async (uuid, text) => {
-      const value = String(text || "").trim();
-
-      if (!value) return;
-
-      try {
-        const { data, error: commentError } = await supabase.rpc("add_comment", {p_uuid: uuid, p_content: value});
-
-        if (commentError) throw commentError;
-
-        const returnedComment = data?.comment;
-
-        const comment = {
-          id: returnedComment?.id ?? Date.now(),
-          content: returnedComment?.content ?? value,
-          time: returnedComment?.time ?? new Date().toISOString()
-        };
-
-        setConfessions(items =>
-          items.map(item => String(item.uuid) === String(uuid) ? {
-            ...item,
-            comments: [...(item.comments || []), comment],
-            commentCount: (item.commentCount || 0) + 1
-          } : item)
-        );
-      } catch (commentError) {
-        console.error("Comment submit error:",commentError);
-
-        alert("Không thể gửi bình luận. Vui lòng thử lại sau.");
-      }
-    },
-    []
-  );
-
-  const virtualRows = useMemo(() => {
-    const rows = [];
-    let currentDate = null;
-    let currentCardRow = null;
-
-    for (const item of confessions) {
-      const date = item.dateLabel || (item.time ? formatDate(item.time) : "Khác");
-
-      if (date !== currentDate) {
-        currentDate = date;
-        rows.push({type: "date", key: `date:${date}`, date});
-        currentCardRow = null;
+      if (commentError) {
+        throw commentError;
       }
 
-      if (!currentCardRow || currentCardRow.items.length >= columns) {
-        currentCardRow = {
-          type: "cards",
-          key: `cards:${date}:${item.uuid}`,
-          items: []
-        };
+      const returnedComment = data?.comment;
 
-        rows.push(currentCardRow);
-      }
+      const comment = {
+        id: returnedComment?.id ?? Date.now(),
+        content: returnedComment?.content ?? value,
+        time: returnedComment?.time ?? new Date().toISOString()
+      };
 
-      currentCardRow.items.push(item);
+      setConfessions((items) =>
+        items.map((item) =>
+          String(item.uuid) === String(uuid)
+            ? {
+              ...item,
+              comments: [...(item.comments || []), comment],
+              commentCount: (item.commentCount || 0) + 1
+            }
+            : item
+        )
+      );
+    } catch (commentError) {
+      console.error("Comment submit error:", commentError);
+      alert("Không thể gửi bình luận. Vui lòng thử lại sau.");
     }
-
-    if (hasMore) {
-      rows.push({type: "loader", key: "loader"});
-    }
-
-    return rows;
-  }, [confessions, columns, hasMore]);
-
-  const virtualizer = useWindowVirtualizer({
-    count: virtualRows.length,
-    estimateSize: index => {
-      const row = virtualRows[index];
-
-      if (row?.type === "date") {
-        return 58;
-      }
-
-      if (row?.type === "loader") {
-        return 64;
-      }
-
-      return columns === 1 ? 272 : 262;
-    },
-    overscan: 5,
-    scrollMargin,
-    getItemKey: index => virtualRows[index]?.key ?? index
-  });
-
-  const virtualItems = virtualizer.getVirtualItems();
-
-  useEffect(() => {
-    const last = virtualItems[virtualItems.length - 1];
-
-    if (!last) return;
-
-    if (last.index >= virtualRows.length - 3 && hasMore && !loadingMore) {
-      loadMore();
-    }
-  }, [
-    virtualItems,
-    virtualRows.length,
-    hasMore,
-    loadingMore,
-    loadMore
-  ]);
-
-  const submitConfession = async event => {
+  };
+  const submitConfession = async (event) => {
     event.preventDefault();
 
-    const value = content.trim();
+    let value = content.trim();
 
     if (!value) {
-      setFormError("Vui lòng nhập nội dung confession trước khi gửi.");
+      setError("Vui lòng nhập nội dung confession trước khi gửi.");
       return;
     }
 
     if (value.length > MAX_LENGTH) {
-      setFormError(`Nội dung quá dài, giới hạn tối đa là ${MAX_LENGTH} ký tự.`);
+      setError(`Nội dung quá dài, giới hạn tối đa là ${MAX_LENGTH} ký tự.`);
       return;
     }
 
     setSubmitting(true);
-    setFormError("");
+    setError("");
 
     try {
-      const { error: submitError } = await supabase.from("confessions").insert({
-        content: value,
-        status: "pending"
-      });
+      const { error: submitError } = await supabase
+        .from("confessions")
+        .insert({
+          content: value,
+          status: "pending"
+        });
 
       if (submitError) {
         throw submitError;
@@ -630,16 +450,14 @@ export default function App() {
       setMainEmojiOpen(false);
     } catch (submitError) {
       console.error("Lỗi gửi confession:", submitError);
-
       alert("Đã xảy ra lỗi kết nối trong quá trình gửi. Vui lòng kiểm tra lại mạng hoặc thử lại sau!");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const submitFeedback = async event => {
+  const submitFeedback = async (event) => {
     event.preventDefault();
-
     const value = feedback.trim();
 
     if (!value) {
@@ -656,8 +474,9 @@ export default function App() {
     setFeedbackError("");
 
     try {
-      const { error: feedbackSubmitError } =
-        await supabase.from("feedback").insert({content: value});
+      const {error: feedbackSubmitError} = await supabase
+        .from("feedback")
+        .insert({content: value});
 
       if (feedbackSubmitError) {
         throw feedbackSubmitError;
@@ -669,8 +488,7 @@ export default function App() {
 
       alert("Cảm ơn bạn! Góp ý đã được gửi thành công.");
     } catch (feedbackSubmitError) {
-      console.error("Lỗi gửi góp ý:", feedbackSubmitError);
-
+      console.error("Lỗi gửi góp ý:",feedbackSubmitError);
       setFeedbackError("Không thể gửi góp ý. Vui lòng thử lại sau.");
     } finally {
       setFeedbackLoading(false);
@@ -681,28 +499,21 @@ export default function App() {
     <>
       <div className="app_container">
         <header className="hero_section">
-          <button
-            id="readme_toggle_btn"
-            title="Hướng dẫn sử dụng / README"
-            onClick={() => setReadmeOpen(true)}
-          >
+          <button id="readme_toggle_btn" title="Hướng dẫn sử dụng / README" onClick={() => setReadmeOpen(true)}>
             <i className="fa-solid fa-book-open" />
             <span>README</span>
           </button>
 
-          <button
-            id="theme_toggle_btn"
-            title="Chuyển đổi giao diện"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          >
-            <i className={`fa-solid fa-${theme === "dark" ? "sun" : "moon"}`}/>
+          <button id="theme_toggle_btn" title="Chuyển đổi giao diện" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+            <i className={`fa-solid fa-${theme === "dark"? "sun" : "moon"}`}/>
+
             <span className="theme_text">
-              {theme === "dark" ? "Chế độ sáng" : "Chế độ tối"}
+              {theme === "dark"? "Chế độ sáng": "Chế độ tối"}
             </span>
           </button>
 
           <div id="picture">
-            <img src={incognitoLogo} alt="incognito logo"/>
+            <img src={incognitoLogo} alt="incognito logo" />
           </div>
 
           <div className="header_titles">
@@ -715,13 +526,11 @@ export default function App() {
 
           <div id="chu_thich">
             <i className="fa-solid fa-circle-info info_icon" />
-            <span>
-              Nơi chia sẻ ẩn danh tâm tư, kỷ niệm học đường một cách tự do và có chừng mực.
-            </span>
+            <span>Nơi chia sẻ ẩn danh tâm tư, kỷ niệm học đường một cách tự do và có chừng mực.</span>
           </div>
         </header>
 
-        <Announcements
+        <Announcements 
           announcements={announcements}
           expandedId={expandedId}
           liked={liked}
@@ -740,58 +549,46 @@ export default function App() {
             </h3>
           </div>
 
-          <form
-            id="confession_form"
-            autoComplete="off"
-            onSubmit={submitConfession}
-          >
+          <form id="confession_form" autoComplete="off" onSubmit={submitConfession}>
             <div className="input_group">
               <div className="textarea_wrapper">
                 <textarea
                   id="confession_input"
                   rows="2"
                   maxLength={MAX_LENGTH}
-                  placeholder="Bạn có tâm sự gì?"
+                  placeholder="Nhập nội dung tâm sự ẩn danh của bạn tại đây..."
                   value={content}
-                  onChange={event => {
+                  onChange={(event) => {
                     setContent(event.target.value);
-                    setFormError("");
+                    setError("");
                   }}
                 />
-
                 <button
                   type="button"
                   className="emoji_toggle_btn inside_input"
                   title="Chọn biểu cảm"
-                  onClick={() => setMainEmojiOpen(value => !value)}
+                  onClick={() => setMainEmojiOpen( (value) => !value )}
                 >
                   <i className="fa-regular fa-face-smile" />
                 </button>
 
                 {mainEmojiOpen && (
                   <div className="emoji_picker_container main_emoji_popup visible">
-                    <EmojiPicker
-                      onSelect={emoji => {
-                        setContent(value => `${value}${emoji}`);
-                        setMainEmojiOpen(false);
-                      }}
-                    />
+                    <EmojiPicker onSelect={(emoji) => {
+                      setContent((value) => `${value}${emoji}`);
+                      setMainEmojiOpen(false);
+                    }}/>
                   </div>
                 )}
-              </div>
 
+              </div>
               <button type="submit" disabled={submitting}>
-                <span>
-                  {submitting ? "Đang gửi..." : "Gửi bài"}
-                </span>
-                <i className={`fa-solid fa-${ submitting ? "spinner fa-spin" : "arrow-up-from-bracket" }`}/>
+                <span>{submitting ? "Đang gửi..." : "Gửi bài"}</span>
+                <i className={`fa-solid fa-${submitting ? "spinner fa-spin": "arrow-up-from-bracket"}`}/>
               </button>
             </div>
           </form>
-
-          <p id="form_error">
-            {formError}
-          </p>
+          <p id="form_error">{error}</p>
         </section>
 
         <section id="search_container">
@@ -803,7 +600,9 @@ export default function App() {
               placeholder="Tìm kiếm theo mã ID (Ví dụ: #001, #002...)"
               autoComplete="off"
               value={search}
-              onChange={event => setSearch(event.target.value)}
+              onChange={(event) =>
+                setSearch(event.target.value)
+              }
             />
           </div>
 
@@ -815,143 +614,58 @@ export default function App() {
               placeholder="Tìm kiếm theo ngày (Ví dụ: #20/08/2026)"
               autoComplete="off"
               value={dateSearch}
-              onChange={event => setDateSearch(event.target.value)}
+              onChange={(event) => setDateSearch(event.target.value)}
             />
           </div>
         </section>
 
-        <main id="confession_list" ref={listRef}>
+        <main id="confession_list">
           {initialLoading ? (
-            <p style={{
-              textAlign: "center",
-              color: "var(--text-muted)",
-              padding: 20
-            }}>
+            <p style={{textAlign:"center", color:"var(--text-muted)", padding: 20}}>
               Đang tải...
             </p>
-          ) : loadError ? (
-            <p style={{
-              textAlign: "center",
-              color: "var(--text-muted)",
-              padding: 20
-            }}>
-              {loadError}
+          ) : error ? (
+            <p style={{textAlign:"center", color:"var(--text-muted)", padding: 20}}>
+              {error}
             </p>
-          ) : confessions.length === 0 ? (
-            <p style={{
-              textAlign: "center",
-              color: "var(--text-muted)",
-              padding: 20
-            }}>
-              {search.trim() || dateSearch.trim()
+          ) : normal.length ? (
+
+            Object.entries(groups).map(([date, items]) => (
+                <div className="date_block" key={date}>
+                  <div className="date_block_header">
+                    📅 Ngày {date}
+                  </div>
+                  <div className="date_block_grid">
+                    {items.map((item) => (
+                      <ConfessionCard 
+                        key={item.uuid} 
+                        confession={item} 
+                        expanded={expandedId === String(item.uuid)}
+                        liked={liked.includes(String(item.uuid))}
+                        onOpen={setExpandedId}
+                        onClose={() => setExpandedId(null)}
+                        onLike={like}
+                        onComment={addComment}
+                        fetchComments={fetchComments}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )
+            )
+          ) : (
+            <p style={{textAlign:"center", color:"var(--text-muted)", padding: 20}}>
+              {confessions.filter((item) => item.status !== "important").length
                 ? "Không tìm thấy bài viết phù hợp với điều kiện tìm kiếm."
                 : "Chưa có bài viết nào được phê duyệt."}
             </p>
-          ) : (
-            <>
-              <div style={{
-                position: "relative",
-                width: "100%",
-                height: `${virtualizer.getTotalSize()}px`
-              }}>
-                {virtualItems.map(
-                  virtualItem => {
-                    const row = virtualRows[virtualItem.index];
-
-                    if (!row) return null;
-
-                    return (
-                      <div
-                        key={virtualItem.key}
-                        data-index={virtualItem.index}
-                        ref={virtualizer.measureElement}
-                        style={{
-                          position: "absolute",
-                          top: 0,
-                          left: 0,
-                          width: "100%",
-                          paddingBottom: 22,
-                          transform: `translateY(${virtualItem.start - virtualizer.options .scrollMargin}px)`
-                        }}
-                      >
-                        {row.type === "date" && (
-                          <div className="date_block_header">
-                            📅 Ngày {row.date}
-                          </div>
-                        )}
-
-                        {row.type === "cards" && (
-                          <div
-                            className="date_block_grid"
-                            style={{
-                              gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`
-                            }}
-                          >
-                            {row.items.map(item => (
-                              <ConfessionCard
-                                key={item.uuid}
-                                confession={item}
-                                expanded={expandedId === String(item.uuid)}
-                                liked={liked.includes(String(item.uuid))}
-                                onOpen={setExpandedId}
-                                onClose={() => setExpandedId(null)}
-                                onLike={like}
-                                onComment={addComment}
-                                fetchComments={fetchComments}
-                              />
-                            ))}
-                          </div>
-                        )}
-
-                        {row.type === "loader" && (
-                          <div
-                            style={{
-                              minHeight: 48,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              color: "var(--text-muted)",
-                              fontSize: "0.85rem"
-                            }}
-                          >
-                            {loadingMore ? "Đang tải thêm..." : ""}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
-                )}
-              </div>
-
-              <div
-                aria-hidden="true"
-                style={{
-                  textAlign: "center",
-                  color: "var(--text-muted)",
-                  fontSize: "0.78rem",
-                  marginTop: 8
-                }}
-              >
-                {totalCount > 0
-                  ? `${confessions.length.toLocaleString("vi-VN")} 
-                  / ${totalCount.toLocaleString("vi-VN")} confession`
-                  : ""}
-              </div>
-            </>
           )}
         </main>
       </div>
 
-      <div
-        id="confession_backdrop"
-        className={expandedId ? "active" : ""}
-        onClick={() => setExpandedId(null)}
-      />
+      <div id="confession_backdrop" className={expandedId ? "active": ""} onClick={() => setExpandedId(null)}/>
 
-      <Modal
-        open={readmeOpen}
-        onClose={() => setReadmeOpen(false)}
-      >
+      <Modal open={readmeOpen} onClose={() =>setReadmeOpen(false)}>
         <button
           type="button"
           className="close_readme_btn"
@@ -962,19 +676,10 @@ export default function App() {
         </button>
 
         <h2>
-          <i
-            className="fa-solid fa-book-open"
-            style={{color: "var(--accent-color)"}}
-          />{" "}
-          Hướng dẫn sử dụng & Giới thiệu
+          <i className="fa-solid fa-book-open" style={{color:"var(--accent-color)"}}/>{" "}Hướng dẫn sử dụng & Giới thiệu
         </h2>
 
-        <div
-          className="readme_body"
-          dangerouslySetInnerHTML={{
-            __html: readmeMarkdownParser.render(readmeMarkdownContent)
-          }}
-        />
+        <div className="readme_body" dangerouslySetInnerHTML={{__html: readmeMarkdownParser.render(readmeMarkdownContent)}}/>
 
         <button
           type="button"
@@ -989,38 +694,23 @@ export default function App() {
         </button>
       </Modal>
 
-      <Modal
-        open={feedbackOpen}
-        onClose={() => setFeedbackOpen(false)}
-        className="feedback_modal_content"
-      >
+      <Modal open={feedbackOpen} onClose={() =>setFeedbackOpen(false)} className="feedback_modal_content">
         <button
           type="button"
           className="close_readme_btn"
           title="Đóng bảng góp ý"
-          onClick={() => setFeedbackOpen(false)}
+          onClick={() =>setFeedbackOpen(false)}
         >
           <i className="fa-solid fa-xmark" />
         </button>
 
         <h2>
-          <i
-            className="fa-solid fa-comment-dots"
-            style={{
-              color: "var(--accent-color)"
-            }}
-          />{" "}
+          <i className="fa-solid fa-comment-dots" style={{color:"var(--accent-color)"}}/>{" "}
           Gửi góp ý
         </h2>
 
-        <form
-          className="feedback_form"
-          autoComplete="off"
-          onSubmit={submitFeedback}
-        >
-          <label htmlFor="feedback_input">
-            Chia sẻ góp ý của bạn
-          </label>
+        <form className="feedback_form" autoComplete="off" onSubmit={submitFeedback}>
+          <label htmlFor="feedback_input">Chia sẻ góp ý của bạn</label>
 
           <textarea
             id="feedback_input"
@@ -1028,7 +718,7 @@ export default function App() {
             maxLength={MAX_LENGTH}
             placeholder="Nhập góp ý hoặc đề xuất của bạn..."
             value={feedback}
-            onChange={event => {
+            onChange={(event) => {
               setFeedback(event.target.value);
               setFeedbackError("");
             }}
@@ -1038,14 +728,11 @@ export default function App() {
             {feedbackError}
           </p>
 
-          <button
-            type="submit"
-            id="feedback_submit_btn"
-            disabled={feedbackLoading}
-          >
+          <button type="submit" id="feedback_submit_btn" disabled={feedbackLoading}>
             {feedbackLoading ? (
               <>
-                <i className="fa-solid fa-spinner fa-spin" />{" "}
+                <i className="fa-solid fa-spinner fa-spin" />
+                {" "}
                 Đang gửi...
               </>
             ) : (
