@@ -786,12 +786,6 @@ export default function App() {
             <img src={incognitoLogo} alt="incognito logo"/>
           </div>
 
-          <div className="mid_autumn_decor" aria-hidden="true">
-            <span className="mid_autumn_moon" />
-            <span className="mid_autumn_stars">✦　·　✧</span>
-            <img src={midAutumnLantern} alt="" />
-          </div>
-
           <div className="header_titles">
             <span className="festival_badge">
               <i className="fa-solid fa-star" /> Tết Trung Thu
