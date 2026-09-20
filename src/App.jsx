@@ -364,7 +364,20 @@ export default function App() {
 
       if (requestId !== requestIdRef.current) return;
 
-      setConfessions(confessionPage.rows);
+      setConfessions(current => {
+        const previousById = new Map(
+          current.map(item => [String(item.uuid), item])
+        );
+
+        return confessionPage.rows.map(row => {
+          const previous = previousById.get(String(row.uuid));
+
+          return previous ? {
+            ...row,
+            comments: previous.comments
+          } : row;
+        });
+      });
       setAnnouncements(announcementRows);
       setTotalCount(confessionPage.total);
 
