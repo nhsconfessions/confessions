@@ -1,0 +1,48 @@
+@use "variables" as *;
+
+.virtual_confession_list {
+  width: 100%;
+  min-width: 0;
+  position: relative;
+}
+
+.virtual_confession_row {
+  width: 100%;
+  min-width: 0;
+}
+
+.virtual_date_header {
+  background: var(--card-bg);
+  border: 2px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 12px 20px;
+  box-shadow: var(--shadow-sm);
+
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--text-main);
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.virtual_card_row {
+  width: 100%;
+  min-width: 0;
+
+  display: grid;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.virtual_loading_more {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  min-height: 44px;
+
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}

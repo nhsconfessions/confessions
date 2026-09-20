@@ -1,0 +1,123 @@
+@use "variables" as *;
+
+.announcement_accordion {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 24px;
+  background: var(--bg-card, #ffffff);
+  border-radius: 12px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.announcement_toggle_btn {
+  width: 100%;
+  min-width: 0;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-color, #111827);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+  }
+
+  .toggle_icon {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  &.active .toggle_icon {
+    transform: rotate(180deg);
+  }
+
+  span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.announcement_wrapper {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  position: relative;
+  padding: 16px 12px;
+  max-height: 600px;
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.3s ease,
+              padding 0.3s ease;
+
+  &.collapsed {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    pointer-events: none;
+  }
+}
+
+.announcement_carousel_track {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 8px 4px;
+  width: 100%;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  .announcement_box {
+    flex: 0 0 min(280px, 100%);
+    max-width: 100%;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+    }
+  }
+}
+
+.carousel_btn {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #d1d5db);
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  @include flex-center;
+  cursor: pointer;
+  z-index: 2;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, background-color 0.2s ease, opacity 0.3s ease;
+  margin: 0 6px;
+  opacity: 1;
+  pointer-events: auto;
+
+  &.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  &:hover {
+    transform: scale(1.1);
+    background-color: var(--primary-color, #3b82f6);
+    color: #ffffff;
+  }
+}
+
