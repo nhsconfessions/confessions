@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 210" role="img" aria-labelledby="lantern-title lantern-desc">
+  <title id="lantern-title">Đèn lồng Trung Thu</title>
+  <desc id="lantern-desc">Một chiếc đèn lồng đỏ với tua vàng</desc>
+  <defs>
+    <linearGradient id="lantern-body" x1="0" x2="1">
+      <stop offset="0" stop-color="#a92d35"/>
+      <stop offset=".5" stop-color="#e0523f"/>
+      <stop offset="1" stop-color="#9e2734"/>
+    </linearGradient>
+    <radialGradient id="lantern-glow" cx=".5" cy=".42" r=".58">
+      <stop offset="0" stop-color="#ffd978" stop-opacity=".9"/>
+      <stop offset=".55" stop-color="#f59e4b" stop-opacity=".32"/>
+      <stop offset="1" stop-color="#f59e4b" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="80" cy="83" rx="65" ry="78" fill="url(#lantern-glow)"/>
+  <path d="M59 21h42l-5 15H64z" fill="#e8b85c"/>
+  <path d="M80 7v14" stroke="#f4d58b" stroke-width="4" stroke-linecap="round"/>
+  <path d="M45 38h70l9 12H36z" fill="#efc466"/>
+  <path d="M43 48h74l10 12H33z" fill="#8c2633"/>
+  <path d="M31 60c0-7 8-12 18-12h62c10 0 18 5 18 12v54c0 28-21 50-49 50s-49-22-49-50z" fill="url(#lantern-body)" stroke="#f1c46e" stroke-width="3"/>
+  <path d="M44 57c7 13 10 31 10 55s-3 42-10 52M116 57c-7 13-10 31-10 55s3 42 10 52M80 51v111" fill="none" stroke="#f4c76b" stroke-opacity=".72" stroke-width="3"/>
+  <path d="M34 111h92M41 143h78" fill="none" stroke="#8c2633" stroke-width="4" stroke-opacity=".65"/>
+  <path d="M38 164h84l-9 14H47z" fill="#efc466"/>
+  <path d="M80 178v18M66 179l-5 20M94 179l5 20" stroke="#efc466" stroke-width="3" stroke-linecap="round"/>
+  <path d="M53 197c8 7 16 7 24 0M83 197c8 7 16 7 24 0" fill="none" stroke="#e8b85c" stroke-width="3" stroke-linecap="round"/>
+</svg>

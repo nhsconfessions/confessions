@@ -16,6 +16,7 @@ import ConfessionCard from "./components/ConfessionCard";
 import EmojiPicker from "./components/EmojiPicker";
 import Modal from "./components/Modal";
 import incognitoLogo from "./assets/incognito.svg";
+import midAutumnLantern from "./assets/mid-autumn-lantern.svg";
 import readmeMarkdownContent from "./README.md?raw";
 
 const PAGE_SIZE = 60;
@@ -772,7 +773,16 @@ export default function App() {
             <img src={incognitoLogo} alt="incognito logo"/>
           </div>
 
+          <div className="mid_autumn_decor" aria-hidden="true">
+            <span className="mid_autumn_moon" />
+            <span className="mid_autumn_stars">✦　·　✧</span>
+            <img src={midAutumnLantern} alt="" />
+          </div>
+
           <div className="header_titles">
+            <span className="festival_badge">
+              <i className="fa-solid fa-star" /> Tết Trung Thu
+            </span>
             <h1>NHSC Confessions</h1>
             <h4>
               <i className="fa-solid fa-clock-rotate-left" />{" "}
