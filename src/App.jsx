@@ -559,24 +559,25 @@ export default function App() {
   }, [confessions, columns, hasMore]);
 
   const virtualizer = useWindowVirtualizer({
-    count: virtualRows.length,
-    estimateSize: index => {
-      const row = virtualRows[index];
+  count: virtualRows.length,
+  estimateSize: index => {
+    const row = virtualRows[index];
 
-      if (row?.type === "date") {
-        return 58;
-      }
+    if (row?.type === "date") {
+      return 58;
+    }
 
-      if (row?.type === "loader") {
-        return 64;
-      }
+    if (row?.type === "loader") {
+      return 64;
+    }
 
-      return columns === 1 ? 272 : 262;
-    },
-    overscan: 5,
-    scrollMargin,
-    getItemKey: index => virtualRows[index]?.key ?? index
-  });
+    return columns === 1 ? 272 : 262;
+  },
+  overscan: 5,
+  scrollMargin,
+  getItemKey: index =>
+    virtualRows[index]?.key ?? index
+});
 
   const virtualItems = virtualizer.getVirtualItems();
 
@@ -861,19 +862,21 @@ export default function App() {
                     if (!row) return null;
 
                     return (
+                      
                       <div
-                        key={virtualItem.key}
-                        data-index={virtualItem.index}
-                        ref={virtualizer.measureElement}
-                        style={{
-                          position: "absolute",
-                          top: 0,
-                          left: 0,
-                          width: "100%",
-                          paddingBottom: 22,
-                          transform: `translateY(${virtualItem.start - virtualizer.options .scrollMargin}px)`
-                        }}
-                      >
+  key={virtualItem.key}
+  data-index={virtualItem.index}
+  ref={virtualizer.measureElement}
+  style={{
+    position: "absolute",
+    top:
+      virtualItem.start -
+      virtualizer.options.scrollMargin,
+    left: 0,
+    width: "100%",
+    paddingBottom: 22
+  }}
+>
                         {row.type === "date" && (
                           <div className="date_block_header">
                             📅 Ngày {row.date}
