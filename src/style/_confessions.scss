@@ -72,6 +72,7 @@
     font-size: 16px;
     text-shadow: 0 0 8px rgba(242, 200, 102, 0.7);
     animation: twinkle 3s ease-in-out infinite;
+    z-index: -999;
 
     &_one { top: 12%; left: 8%; }
     &_two { top: 22%; right: 10%; animation-delay: -1s; }
@@ -97,6 +98,7 @@
     background: linear-gradient(90deg, #c94f35, #f27a4d 45%, #b83d2e);
     box-shadow: 0 5px 12px rgba(111, 38, 25, .2);
     animation: sway 4s ease-in-out infinite;
+    z-index: -999;
 
     &::before {
       content: "";
