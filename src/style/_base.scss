@@ -47,6 +47,7 @@ body {
   gap: 22px;
   width: 100%;
   min-width: 0;
+  z-index: auto;
 
   h1,
   h4 {
@@ -54,4 +55,3 @@ body {
     overflow-wrap: anywhere;
   }
 }
-

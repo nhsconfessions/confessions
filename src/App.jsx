@@ -767,47 +767,47 @@ export default function App() {
 
   return (
     <>
-    <div className="festival_sky" aria-hidden="true">
-      <div className="sky_stars">
-        <img className="light" src={starsLight} alt="" />
-        <img className="dark" src={starsDark} alt="" />
-      </div>
+      <div className="festival_sky" aria-hidden="true">
+        <div className="sky_stars">
+          <img className="light" src={starsLight} alt="" />
+          <img className="dark" src={starsDark} alt="" />
+        </div>
 
-      <div className="sky_stars stars_far">
-        <img className="light" src={starsLight} alt="" />
-        <img className="dark" src={starsDark} alt="" />
-      </div>
+        <div className="sky_stars stars_far">
+          <img className="light" src={starsLight} alt="" />
+          <img className="dark" src={starsDark} alt="" />
+        </div>
 
-      <div className="sky_moon">
-        <img className="light" src={moonLight} alt="" />
-        <img className="dark" src={moonDark} alt="" />
-      </div>
+        <div className="sky_moon">
+          <img className="light" src={moonLight} alt="" />
+          <img className="dark" src={moonDark} alt="" />
+        </div>
 
-      <div className="sky_cloud cloud_one">
-        <img className="light" src={cloudLight} alt="" />
-        <img className="dark" src={cloudDark} alt="" />
-      </div>
+        <div className="sky_cloud cloud_one">
+          <img className="light" src={cloudLight} alt="" />
+          <img className="dark" src={cloudDark} alt="" />
+        </div>
 
-      <div className="sky_cloud cloud_two">
-        <img className="light" src={cloudLight} alt="" />
-        <img className="dark" src={cloudDark} alt="" />
-      </div>
+        <div className="sky_cloud cloud_two">
+          <img className="light" src={cloudLight} alt="" />
+          <img className="dark" src={cloudDark} alt="" />
+        </div>
 
-      <div className="sky_cloud cloud_three">
-        <img className="light" src={cloudLight} alt="" />
-        <img className="dark" src={cloudDark} alt="" />
-      </div>
+        <div className="sky_cloud cloud_three">
+          <img className="light" src={cloudLight} alt="" />
+          <img className="dark" src={cloudDark} alt="" />
+        </div>
 
-      <div className="sky_bamboo">
-        <img className="light" src={bambooLight} alt="" />
-        <img className="dark" src={bambooDark} alt="" />
-      </div>
+        <div className="sky_bamboo">
+          <img className="light" src={bambooLight} alt="" />
+          <img className="dark" src={bambooDark} alt="" />
+        </div>
 
-      <div className="sky_bamboo bamboo_left">
-        <img className="light" src={bambooLight} alt="" />
-        <img className="dark" src={bambooDark} alt="" />
+        <div className="sky_bamboo bamboo_left">
+          <img className="light" src={bambooLight} alt="" />
+          <img className="dark" src={bambooDark} alt="" />
+        </div>
       </div>
-    </div>
       <div className="app_container">
         <header className="hero_section">
           <button
@@ -835,9 +835,6 @@ export default function App() {
           </div>
 
           <div className="header_titles">
-            <span className="festival_badge">
-              <i className="fa-solid fa-star" /> Tết Trung Thu
-            </span>
             <h1>NHSC Confessions</h1>
             <h4>
               <i className="fa-solid fa-clock-rotate-left" />{" "}
@@ -847,9 +844,7 @@ export default function App() {
 
           <div id="chu_thich">
             <i className="fa-solid fa-circle-info info_icon" />
-            <span>
-              Nơi chia sẻ ẩn danh tâm tư, kỷ niệm học đường một cách tự do và có chừng mực.
-            </span>
+            <span>Nơi chia sẻ ẩn danh tâm tư, kỷ niệm học đường một cách tự do và có chừng mực.</span>
           </div>
         </header>
 
