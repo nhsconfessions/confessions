@@ -1,9 +1,6 @@
 @use "variables" as *;
 
 .hero_section {
-  background:
-    radial-gradient(circle at 88% 16%, rgba(244, 194, 95, 0.18), transparent 24%),
-    var(--card-bg);
   border: 2px solid var(--card-border);
   border-radius: var(--radius-lg);
   padding: 28px 24px;
@@ -18,7 +15,6 @@
 }
 
 .card_wrapper {
-  background: var(--card-bg);
   border: 2px solid var(--card-border);
   border-radius: var(--radius-lg);
   padding: 22px 24px;
