@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" role="img" aria-labelledby="flower-light-title">
+  <defs>
+    <path id="petal" d="M30 30 C30 18 24 8 30 2 C36 8 30 18 30 30 Z"/>
+  </defs>
+  <g fill="#f5b7b1">
+    <use href="#petal" transform="rotate(0 30 30)"/>
+    <use href="#petal" transform="rotate(72 30 30)"/>
+    <use href="#petal" transform="rotate(144 30 30)"/>
+    <use href="#petal" transform="rotate(216 30 30)"/>
+    <use href="#petal" transform="rotate(288 30 30)"/>
+  </g>
+  <circle cx="30" cy="30" r="5" fill="#d69b32"/>
+  <circle cx="30" cy="30" r="2.5" fill="#f39c12"/>
+</svg>

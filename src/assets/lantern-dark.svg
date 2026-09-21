@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 180" role="img" aria-labelledby="lantern-dark-title">
+  <defs>
+    <filter id="glow-dark" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    </defs>
+  <!-- Tassel -->
+  <g stroke="#f1c40f" stroke-width="1.8" stroke-linecap="round">
+    <line x1="60" y1="148" x2="60" y2="172"/>
+    <line x1="54" y1="148" x2="50" y2="168"/>
+    <line x1="66" y1="148" x2="70" y2="168"/>
+    <line x1="57" y1="148" x2="55" y2="170"/>
+    <line x1="63" y1="148" x2="65" y2="170"/>
+  </g>
+  <!-- Bottom cap -->
+  <rect x="42" y="138" width="36" height="10" rx="3" fill="#f1c40f"/>
+  <!-- Lantern body -->
+  <rect x="28" y="46" width="64" height="96" rx="18" fill="#c0392b"/>
+  <!-- Body highlight -->
+  <rect x="36" y="54" width="20" height="80" rx="10" fill="#e74c3c" opacity=".4"/>
+  <!-- Inner flame glow -->
+  <circle cx="60" cy="94" r="18" fill="#f39c12" opacity=".45" filter="url(#glow-dark)"/>
+  <circle cx="60" cy="94" r="8" fill="#f1c40f" opacity=".85"/>
+  <!-- Top cap -->
+  <rect x="42" y="40" width="36" height="10" rx="3" fill="#f1c40f"/>
+  <!-- Handle -->
+  <path d="M48 40 C48 28 52 24 60 24 C68 24 72 28 72 40" fill="none" stroke="#f1c40f" stroke-width="3" stroke-linecap="round"/>
+  <!-- Decorative bands -->
+  <rect x="28" y="70" width="64" height="3" rx="1.5" fill="#922b21" opacity=".6"/>
+  <rect x="28" y="114" width="64" height="3" rx="1.5" fill="#922b21" opacity=".6"/>
+</svg>

@@ -12,6 +12,63 @@
   position: relative;
 }
 
+.floating_lanterns {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+
+  .lantern {
+    position: absolute;
+    bottom: -120px;
+    width: 54px;
+    animation: floatUp 18s linear infinite;
+
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .lantern_charm {
+      position: absolute;
+      top: 75%;
+      right: -10px;
+      width: 20px;
+    }
+  }
+
+  .lantern_1 { left: 8%; animation-delay: -2s; }
+  .lantern_2 { left: 27%; animation-delay: -10s; animation-duration: 21s; }
+  .lantern_3 { left: 48%; animation-delay: -15s; }
+  .lantern_4 { left: 69%; animation-delay: -6s; animation-duration: 20s; }
+  .lantern_5 { left: 88%; animation-delay: -13s; }
+
+  &.stars_variant .lantern {
+    transform: scale(.82);
+  }
+
+  &.flowers_variant {
+    .lantern {
+      width: 46px;
+      animation-duration: 22s;
+    }
+
+    .lantern_1 { left: 17%; animation-delay: -12s; }
+    .lantern_2 { left: 38%; animation-delay: -3s; }
+    .lantern_3 { left: 59%; animation-delay: -18s; }
+    .lantern_4 { left: 79%; animation-delay: -8s; }
+    .lantern_5 { left: 96%; animation-delay: -16s; }
+
+    .lantern_charm {
+      top: 68%;
+      right: -16px;
+      width: 28px;
+    }
+  }
+}
+
 .sky_moon,
 .sky_stars,
 .sky_cloud,
@@ -30,7 +87,21 @@
   }
 }
 
+.floating_lanterns,
+.hero_lanterns {
+  .lantern .dark,
+  .hero_lantern .dark { display: none; }
+}
+
 [data-theme="dark"] {
+  .floating_lanterns,
+  .hero_lanterns {
+    .lantern .light,
+    .hero_lantern .light { display: none; }
+    .lantern .dark,
+    .hero_lantern .dark { display: block; }
+  }
+
   .sky_moon,
   .sky_stars,
   .sky_cloud,
@@ -111,6 +182,10 @@
 }
 
 @media (max-width: 700px) {
+  .floating_lanterns .lantern { width: 42px; }
+  .floating_lanterns.flowers_variant .lantern { width: 36px; }
+  .hero_lantern { width: 34px; }
+  .hero_lantern_three { display: none; }
   .sky_moon { width: 84px; top: 56px; }
   .sky_stars { width: 160px; top: 76px; }
   .sky_stars.stars_far { display: none; }

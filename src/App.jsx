@@ -24,6 +24,12 @@ import bambooLight from "./assets/bamboo-light.svg";
 import bambooDark from "./assets/bamboo-dark.svg";
 import starsLight from "./assets/stars-light.svg";
 import starsDark from "./assets/stars-dark.svg";
+import lanternLight from "./assets/lantern-light.svg";
+import lanternDark from "./assets/lantern-dark.svg";
+import flowerLight from "./assets/flower-light.svg";
+import flowerDark from "./assets/flower-dark.svg";
+import starSmallLight from "./assets/star-small-light.svg";
+import starSmallDark from "./assets/star-small-dark.svg";
 import readmeMarkdownContent from "./README.md?raw";
 
 const PAGE_SIZE = 60;
@@ -768,6 +774,28 @@ export default function App() {
   return (
     <>
       <div className="festival_sky" aria-hidden="true">
+        <div className="floating_lanterns stars_variant">
+          {[1, 2, 3, 4, 5].map(index => (
+            <div className={`lantern lantern_${index}`} key={`star-lantern-${index}`}>
+              <img className="light lantern_sprite" src={lanternLight} alt="" />
+              <img className="dark lantern_sprite" src={lanternDark} alt="" />
+              <img className="light lantern_charm" src={starSmallLight} alt="" />
+              <img className="dark lantern_charm" src={starSmallDark} alt="" />
+            </div>
+          ))}
+        </div>
+
+        <div className="floating_lanterns flowers_variant">
+          {[1, 2, 3, 4, 5].map(index => (
+            <div className={`lantern lantern_${index}`} key={`flower-lantern-${index}`}>
+              <img className="light lantern_sprite" src={lanternLight} alt="" />
+              <img className="dark lantern_sprite" src={lanternDark} alt="" />
+              <img className="light lantern_charm" src={flowerLight} alt="" />
+              <img className="dark lantern_charm" src={flowerDark} alt="" />
+            </div>
+          ))}
+        </div>
+
         <div className="sky_stars">
           <img className="light" src={starsLight} alt="" />
           <img className="dark" src={starsDark} alt="" />
@@ -810,6 +838,21 @@ export default function App() {
       </div>
       <div className="app_container">
         <header className="hero_section">
+          <div className="hero_lanterns" aria-hidden="true">
+            <div className="hero_lantern hero_lantern_one">
+              <img className="light" src={lanternLight} alt="" />
+              <img className="dark" src={lanternDark} alt="" />
+            </div>
+            <div className="hero_lantern hero_lantern_two">
+              <img className="light" src={lanternLight} alt="" />
+              <img className="dark" src={lanternDark} alt="" />
+            </div>
+            <div className="hero_lantern hero_lantern_three">
+              <img className="light" src={lanternLight} alt="" />
+              <img className="dark" src={lanternDark} alt="" />
+            </div>
+          </div>
+
           <button
             id="readme_toggle_btn"
             title="Hướng dẫn sử dụng / README"
@@ -844,7 +887,7 @@ export default function App() {
 
           <div id="chu_thich">
             <i className="fa-solid fa-circle-info info_icon" />
-            <span>Nơi chia sẻ ẩn danh tâm tư, kỷ niệm học đường một cách tự do và có chừng mực.</span>
+            <span style={{textAlign: "center"}}>Nơi chia sẻ ẩn danh tâm tư, kỷ niệm học đường một cách tự do và có chừng mực.</span>
           </div>
         </header>
 

@@ -11,7 +11,34 @@
   text-align: center;
   gap: 16px;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+}
+
+.hero_lanterns {
+  position: absolute;
+  top: -24px;
+  left: 0;
+  right: 0;
+  height: 80px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.hero_lantern {
+  position: absolute;
+  top: 0;
+  width: 42px;
+  transform-origin: top center;
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  &.hero_lantern_one { left: 16%; transform: rotate(-8deg); }
+  &.hero_lantern_two { right: 17%; transform: rotate(8deg); }
+  &.hero_lantern_three { left: 50%; transform: translateX(-50%) rotate(-2deg); }
 }
 
 .card_wrapper {
