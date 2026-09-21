@@ -1,0 +1,128 @@
+@use "variables" as *;
+
+.festival_sky {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.app_container {
+  position: relative;
+  z-index: 1;
+}
+
+.sky_moon,
+.sky_stars,
+.sky_cloud,
+.sky_bamboo {
+  position: absolute;
+  pointer-events: none;
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .dark {
+    display: none;
+  }
+}
+
+[data-theme="dark"] {
+  .sky_moon,
+  .sky_stars,
+  .sky_cloud,
+  .sky_bamboo {
+    .light { display: none; }
+    .dark { display: block; }
+  }
+}
+
+.sky_moon {
+  top: 72px;
+  right: 5%;
+  width: 116px;
+  animation: skyFloat 9s ease-in-out infinite;
+}
+
+.sky_stars {
+  top: 96px;
+  left: 4%;
+  width: 230px;
+  animation: skyTwinkle 4.5s ease-in-out infinite alternate;
+
+  &.stars_far {
+    top: auto;
+    bottom: 140px;
+    left: auto;
+    right: 10%;
+    width: 170px;
+    opacity: .7;
+    animation-delay: -2.2s;
+  }
+}
+
+.sky_cloud {
+  &.cloud_one {
+    top: 46px;
+    left: 14%;
+    width: 230px;
+    animation: skyDrift 30s ease-in-out infinite alternate;
+  }
+
+  &.cloud_two {
+    top: 170px;
+    right: 16%;
+    width: 160px;
+    opacity: .9;
+    animation: skyDrift 40s ease-in-out infinite alternate-reverse;
+  }
+
+  &.cloud_three {
+    bottom: 80px;
+    left: 5%;
+    width: 190px;
+    opacity: .75;
+    animation: skyDrift 48s ease-in-out infinite alternate;
+    animation-delay: -18s;
+  }
+}
+
+.sky_bamboo {
+  right: -14px;
+  bottom: -8px;
+  width: 170px;
+  transform-origin: bottom center;
+  animation: skySway 7s ease-in-out infinite alternate;
+
+  &.bamboo_left {
+    right: auto;
+    left: -20px;
+    width: 130px;
+    animation-delay: -3.5s;
+    opacity: .9;
+
+    img {
+      transform: scaleX(-1);
+    }
+  }
+}
+
+@media (max-width: 700px) {
+  .sky_moon { width: 84px; top: 56px; }
+  .sky_stars { width: 160px; top: 76px; }
+  .sky_stars.stars_far { display: none; }
+  .sky_cloud.cloud_two { width: 120px; }
+  .sky_cloud.cloud_three { display: none; }
+  .sky_bamboo { width: 120px; }
+  .sky_bamboo.bamboo_left { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .festival_sky * {
+    animation: none !important;
+  }
+}

@@ -16,7 +16,14 @@ import ConfessionCard from "./components/ConfessionCard";
 import EmojiPicker from "./components/EmojiPicker";
 import Modal from "./components/Modal";
 import incognitoLogo from "./assets/incognito.svg";
-import midAutumnLantern from "./assets/mid-autumn-lantern.svg";
+import moonLight from "./assets/moon-light.svg";
+import moonDark from "./assets/moon-dark.svg";
+import cloudLight from "./assets/cloud-light.svg";
+import cloudDark from "./assets/cloud-dark.svg";
+import bambooLight from "./assets/bamboo-light.svg";
+import bambooDark from "./assets/bamboo-dark.svg";
+import starsLight from "./assets/stars-light.svg";
+import starsDark from "./assets/stars-dark.svg";
 import readmeMarkdownContent from "./README.md?raw";
 
 const PAGE_SIZE = 60;
@@ -760,6 +767,47 @@ export default function App() {
 
   return (
     <>
+    <div className="festival_sky" aria-hidden="true">
+      <div className="sky_stars">
+        <img className="light" src={starsLight} alt="" />
+        <img className="dark" src={starsDark} alt="" />
+      </div>
+
+      <div className="sky_stars stars_far">
+        <img className="light" src={starsLight} alt="" />
+        <img className="dark" src={starsDark} alt="" />
+      </div>
+
+      <div className="sky_moon">
+        <img className="light" src={moonLight} alt="" />
+        <img className="dark" src={moonDark} alt="" />
+      </div>
+
+      <div className="sky_cloud cloud_one">
+        <img className="light" src={cloudLight} alt="" />
+        <img className="dark" src={cloudDark} alt="" />
+      </div>
+
+      <div className="sky_cloud cloud_two">
+        <img className="light" src={cloudLight} alt="" />
+        <img className="dark" src={cloudDark} alt="" />
+      </div>
+
+      <div className="sky_cloud cloud_three">
+        <img className="light" src={cloudLight} alt="" />
+        <img className="dark" src={cloudDark} alt="" />
+      </div>
+
+      <div className="sky_bamboo">
+        <img className="light" src={bambooLight} alt="" />
+        <img className="dark" src={bambooDark} alt="" />
+      </div>
+
+      <div className="sky_bamboo bamboo_left">
+        <img className="light" src={bambooLight} alt="" />
+        <img className="dark" src={bambooDark} alt="" />
+      </div>
+    </div>
       <div className="app_container">
         <header className="hero_section">
           <button
