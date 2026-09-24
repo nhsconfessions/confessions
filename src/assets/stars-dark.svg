@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-labelledby="stars-dark-title">
+  <defs>
+    <path id="sparkle" d="M0 -14 C2 -4 4 -2 14 0 C4 2 2 4 0 14 C-2 4 -4 2 -14 0 C-4 -2 -2 -4 0 -14 Z"/>
+    <radialGradient id="glow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#ffe9a8" stop-opacity=".5"/>
+      <stop offset="1" stop-color="#ffe9a8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="60" cy="50" r="26" fill="url(#glow)"/>
+  <circle cx="200" cy="190" r="22" fill="url(#glow)"/>
+  <use href="#sparkle" transform="translate(60 50)" fill="#ffe9a8" opacity=".95"/>
+  <use href="#sparkle" transform="translate(180 90) scale(.6)" fill="#f2c866" opacity=".75"/>
+  <use href="#sparkle" transform="translate(120 170) scale(.45)" fill="#f2c866" opacity=".7"/>
+  <use href="#sparkle" transform="translate(200 190) scale(.8)" fill="#ffe9a8" opacity=".85"/>
+  <circle cx="95" cy="105" r="3" fill="#f2c866" opacity=".8"/>
+  <circle cx="150" cy="40" r="2.4" fill="#f2c866" opacity=".7"/>
+  <circle cx="40" cy="150" r="2.8" fill="#f2c866" opacity=".75"/>
+  <circle cx="210" cy="140" r="2" fill="#f2c866" opacity=".65"/>
+  <circle cx="75" cy="205" r="2.2" fill="#f2c866" opacity=".65"/>
+  <circle cx="170" cy="215" r="2.6" fill="#f2c866" opacity=".75"/>
+</svg>

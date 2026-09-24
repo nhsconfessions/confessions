@@ -36,6 +36,14 @@
     font-size: 1.75rem;
   }
 
+  .mid_autumn_decor {
+    right: -13px;
+    bottom: -30px;
+    transform: scale(0.8) rotate(4deg);
+    transform-origin: bottom right;
+    opacity: 0.9;
+  }
+
   #search_container {
     grid-template-columns: 1fr;
   }
@@ -94,4 +102,3 @@
     right: 8px;
   }
 }
-

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="moon-light-title">
+  <defs>
+    <radialGradient id="halo" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#f4d58b" stop-opacity=".55"/>
+      <stop offset=".6" stop-color="#f4d58b" stop-opacity=".18"/>
+      <stop offset="1" stop-color="#f4d58b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="face" cx=".38" cy=".35" r=".78">
+      <stop offset="0" stop-color="#fbe7a9"/>
+      <stop offset=".7" stop-color="#f3cd74"/>
+      <stop offset="1" stop-color="#eab959"/>
+    </radialGradient>
+  </defs>
+  <circle cx="60" cy="60" r="56" fill="url(#halo)"/>
+  <circle cx="60" cy="60" r="34" fill="url(#face)"/>
+  <circle cx="48" cy="50" r="6.5" fill="#e6b45c" opacity=".55"/>
+  <circle cx="70" cy="66" r="4.5" fill="#e6b45c" opacity=".45"/>
+  <circle cx="60" cy="78" r="3" fill="#e6b45c" opacity=".4"/>
+  <circle cx="73" cy="45" r="2.5" fill="#e6b45c" opacity=".35"/>
+</svg>
