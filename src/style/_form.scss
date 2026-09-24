@@ -595,10 +595,11 @@
   padding: 12px;
   box-sizing: border-box;
   text-align: center;
+  
 
   h2 {
+    display: block!important;
     margin: 0;
-    display: block;
     color: var(--text-color);
     font-size: 1.35rem;
     line-height: 1.35;
