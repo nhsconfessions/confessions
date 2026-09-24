@@ -30,6 +30,7 @@ import flowerLight from "./assets/flower-light.svg";
 import flowerDark from "./assets/flower-dark.svg";
 import starSmallLight from "./assets/star-small-light.svg";
 import starSmallDark from "./assets/star-small-dark.svg";
+import chooseOne from "./assets/chooseone.png";
 import readmeMarkdownContent from "./README.md?raw";
 
 const PAGE_SIZE = 60;
@@ -59,7 +60,9 @@ function normalizeConfession(item) {
     time: item.created_at,
     likes: Number(item.likes) || 0,
     commentCount: Number(item.comment_count) || 0,
-    lastUpdated: item.last_updated ? new Date(item.last_updated).getTime() : Date.now(),
+    lastUpdated: item.last_updated
+      ? new Date(item.last_updated).getTime()
+      : Date.now(),
     comments: null,
     number: Number(item.display_number) || 0,
     dateLabel:
@@ -110,6 +113,18 @@ export default function App() {
   const [columns, setColumns] = useState(getColumnCount);
   const [scrollMargin, setScrollMargin] = useState(0);
 
+  // Mid-Autumn cake choice. Missing, empty and "none" all mean
+  // the visitor has not chosen a cake yet.
+  const [cakeChoiceOpen, setCakeChoiceOpen] = useState(() => {
+    const stored = localStorage.getItem("cakechoose");
+    return stored === null || stored.trim() === "" || stored === "none";
+  });
+  const [cakeResultOpen, setCakeResultOpen] = useState(false);
+  const [selectedCake, setSelectedCake] = useState(() => {
+    const stored = localStorage.getItem("cakechoose");
+    return stored === "banh-dau-xanh" || stored === "banh-thap-cam" ? stored : null;
+  });
+
   const listRef = useRef(null);
   const firstLoadRef = useRef(true);
   const offsetRef = useRef(0);
@@ -132,12 +147,18 @@ export default function App() {
   useEffect(() => {
     document.body.classList.toggle(
       "confession-modal-open",
-      Boolean(expandedId || readmeOpen || feedbackOpen)
+      Boolean(
+        expandedId ||
+        readmeOpen ||
+        feedbackOpen ||
+        cakeResultOpen
+      )
     );
+
     return () => {
       document.body.classList.remove("confession-modal-open");
     };
-  }, [expandedId, readmeOpen, feedbackOpen]);
+  }, [expandedId, readmeOpen, feedbackOpen, cakeResultOpen]);
 
   useEffect(() => {
     const handleResize = () => setColumns(getColumnCount());
@@ -168,58 +189,65 @@ export default function App() {
     };
   }, []);
 
+  const chooseCake = useCallback(cake => {
+    localStorage.setItem("cakechoose", cake);
+    setSelectedCake(cake);
+    setCakeChoiceOpen(false);
+
+    requestAnimationFrame(() => {
+      setCakeResultOpen(true);
+    });
+  }, []);
+
   const fetchConfessionPage = useCallback(
-  async ({ query, dateQuery, offset, limit = PAGE_SIZE }) => {
-    if (!query && !dateQuery) {
-      const { data, count, error } = await supabase
-        .from("confessions")
-        .select(
-          "uuid, created_at, content, status, likes, comment_count, last_updated",
-          { count: "exact" }
-        )
-        .eq("status", "approved")
-        .order("created_at", { ascending: false })
-        .range(offset, offset + limit - 1);
+    async ({ query, dateQuery, offset, limit = PAGE_SIZE }) => {
+      if (!query && !dateQuery) {
+        const { data, count, error } = await supabase
+          .from("confessions")
+          .select(
+            "uuid, created_at, content, status, likes, comment_count, last_updated",
+            { count: "exact" }
+          )
+          .eq("status", "approved")
+          .order("created_at", { ascending: false })
+          .range(offset, offset + limit - 1);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      const total = count || 0;
+        const total = count || 0;
 
-      const rows = (data || []).map((item, index) =>
-        normalizeConfession({
-          ...item,
-          display_number: total - offset - index
-        })
-      );
+        const rows = (data || []).map((item, index) =>
+          normalizeConfession({
+            ...item,
+            display_number: total - offset - index
+          })
+        );
 
-      return { rows, total };
-    }
+        return { rows, total };
+      }
 
-    const { data, error } = await supabase.rpc(
-      "search_confessions",
-      {
+      const { data, error } = await supabase.rpc("search_confessions", {
         p_query: query,
         p_date_query: dateQuery,
         p_limit: limit,
         p_offset: offset
-      }
-    );
+      });
 
-    if (error) throw error;
+      if (error) throw error;
 
-    const total =
-      Array.isArray(data) && data.length > 0
-        ? Number(data[0].total_count) || 0
-        : 0;
+      const total =
+        Array.isArray(data) && data.length > 0
+          ? Number(data[0].total_count) || 0
+          : 0;
 
-    const rows = Array.isArray(data)
-      ? data.map(normalizeConfession)
-      : [];
+      const rows = Array.isArray(data)
+        ? data.map(normalizeConfession)
+        : [];
 
-    return { rows, total };
-  },
-  []
-);
+      return { rows, total };
+    },
+    []
+  );
 
   const fetchAnnouncements = useCallback(async () => {
     const { data, error: announcementError } = await supabase
@@ -237,84 +265,77 @@ export default function App() {
       .order("created_at", { ascending: false });
 
     if (announcementError) throw announcementError;
-
     return Array.isArray(data) ? data.map(normalizeAnnouncement) : [];
   }, []);
 
   const reloadList = useCallback(
-  async (query, dateQuery) => {
-    const requestId = ++requestIdRef.current;
+    async (query, dateQuery) => {
+      const requestId = ++requestIdRef.current;
 
-    activeQueryRef.current = {
-      query,
-      dateQuery
-    };
-
-    offsetRef.current = 0;
-    setInitialLoading(true);
-    setLoadError("");
-
-    const announcementPromise = fetchAnnouncements().catch(error => {
-      console.error("Announcement load error:", error);
-      return null;
-    });
-
-    try {
-      const confessionPage = await fetchConfessionPage({
+      activeQueryRef.current = {
         query,
-        dateQuery,
-        offset: 0,
-        limit: PAGE_SIZE
+        dateQuery
+      };
+
+      offsetRef.current = 0;
+      setInitialLoading(true);
+      setLoadError("");
+
+      const announcementPromise = fetchAnnouncements().catch(error => {
+        console.error("Announcement load error:", error);
+        return null;
       });
 
-      if (requestId !== requestIdRef.current) return;
+      try {
+        const confessionPage = await fetchConfessionPage({
+          query,
+          dateQuery,
+          offset: 0,
+          limit: PAGE_SIZE
+        });
 
-      setConfessions(confessionPage.rows);
-      setTotalCount(confessionPage.total);
-      offsetRef.current = confessionPage.rows.length;
-      setHasMore(offsetRef.current < confessionPage.total);
-      setInitialLoading(false);
+        if (requestId !== requestIdRef.current) return;
 
-      const announcementRows = await announcementPromise;
-
-      if (requestId !== requestIdRef.current) return;
-      if (announcementRows) {
-        setAnnouncements(announcementRows);
-      }
-    } catch (error) {
-      console.error("Supabase load error:", error);
-
-      if (requestId === requestIdRef.current) {
-        setLoadError(
-          "Không thể tải dữ liệu. Vui lòng thử lại sau."
-        );
+        setConfessions(confessionPage.rows);
+        setTotalCount(confessionPage.total);
+        offsetRef.current = confessionPage.rows.length;
+        setHasMore(offsetRef.current < confessionPage.total);
         setInitialLoading(false);
+
+        const announcementRows = await announcementPromise;
+        if (requestId !== requestIdRef.current) return;
+
+        if (announcementRows) {
+          setAnnouncements(announcementRows);
+        }
+      } catch (error) {
+        console.error("Supabase load error:", error);
+
+        if (requestId === requestIdRef.current) {
+          setLoadError("Không thể tải dữ liệu. Vui lòng thử lại sau.");
+          setInitialLoading(false);
+        }
       }
-    }
-  },
-  [fetchConfessionPage, fetchAnnouncements]
-);
+    },
+    [fetchConfessionPage, fetchAnnouncements]
+  );
 
   useEffect(() => {
-  const query = normalizeQuery(search);
-  const dateQuery = normalizeQuery(dateSearch);
+    const query = normalizeQuery(search);
+    const dateQuery = normalizeQuery(dateSearch);
 
-  if (firstLoadRef.current) {
-    firstLoadRef.current = false;
-    reloadList(query, dateQuery);
-    return;
-  }
+    if (firstLoadRef.current) {
+      firstLoadRef.current = false;
+      reloadList(query, dateQuery);
+      return;
+    }
 
-  const timer = setTimeout(() => {
-    reloadList(query, dateQuery);
-  }, 300);
+    const timer = setTimeout(() => {
+      reloadList(query, dateQuery);
+    }, 300);
 
-  return () => clearTimeout(timer);
-}, [
-  search,
-  dateSearch,
-  reloadList
-]);
+    return () => clearTimeout(timer);
+  }, [search, dateSearch, reloadList]);
 
   const loadMore = useCallback(async () => {
     if (loadingMoreRef.current || !hasMore) return;
@@ -337,14 +358,10 @@ export default function App() {
       if (requestId !== requestIdRef.current) return;
 
       setConfessions(current => {
-        const existing = new Set(
-          current.map(item => String(item.uuid))
-        );
-
+        const existing = new Set(current.map(item => String(item.uuid)));
         const newRows = page.rows.filter(
           item => !existing.has(String(item.uuid))
         );
-
         return [...current, ...newRows];
       });
 
@@ -384,21 +401,19 @@ export default function App() {
 
         return confessionPage.rows.map(row => {
           const previous = previousById.get(String(row.uuid));
-
-          return previous ? {
-            ...row,
-            comments: previous.comments
-          } : row;
+          return previous
+            ? {
+                ...row,
+                comments: previous.comments
+              }
+            : row;
         });
       });
+
       setAnnouncements(announcementRows);
       setTotalCount(confessionPage.total);
-
       offsetRef.current = confessionPage.rows.length;
-
-      setHasMore(
-        offsetRef.current < confessionPage.total
-      );
+      setHasMore(offsetRef.current < confessionPage.total);
     } catch (refreshError) {
       console.error("Refresh error:", refreshError);
     }
@@ -430,11 +445,7 @@ export default function App() {
 
     return () => {
       cancelled = true;
-
-      if (timer) {
-        clearTimeout(timer);
-      }
-
+      if (timer) clearTimeout(timer);
       document.removeEventListener("visibilitychange", visibilityHandler);
     };
   }, [refreshLoaded]);
@@ -470,7 +481,9 @@ export default function App() {
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [refreshLoaded]);
 
   const fetchComments = useCallback(async uuid => {
@@ -483,18 +496,24 @@ export default function App() {
 
       if (commentsError) throw commentsError;
 
-      const comments = Array.isArray(data) ? data.map(comment => ({
-        id: comment.id,
-        content: comment.content || "",
-        time: comment.created_at
-      })) : [];
+      const comments = Array.isArray(data)
+        ? data.map(comment => ({
+            id: comment.id,
+            content: comment.content || "",
+            time: comment.created_at
+          }))
+        : [];
 
       setConfessions(items =>
-        items.map(item => String(item.uuid) === String(uuid) ? {
-          ...item,
-          comments,
-          commentCount: comments.length
-        } : item)
+        items.map(item =>
+          String(item.uuid) === String(uuid)
+            ? {
+                ...item,
+                comments,
+                commentCount: comments.length
+              }
+            : item
+        )
       );
     } catch (commentsError) {
       console.error("Comments request failed:", commentsError);
@@ -509,167 +528,191 @@ export default function App() {
       if (liked.includes(id)) return;
 
       const nextLiked = [...liked, id];
-
       setLiked(nextLiked);
       localStorage.setItem(LIKED_KEY, JSON.stringify(nextLiked));
 
       setConfessions(items =>
-        items.map(item => String(item.uuid) === id ? {
-          ...item,
-          likes: (item.likes || 0) + 1
-        } : item)
+        items.map(item =>
+          String(item.uuid) === id
+            ? {
+                ...item,
+                likes: (item.likes || 0) + 1
+              }
+            : item
+        )
       );
 
       setAnnouncements(items =>
-        items.map(item => String(item.uuid) === id ? {
-          ...item,
-          likes: (item.likes || 0) + 1
-        } : item)
+        items.map(item =>
+          String(item.uuid) === id
+            ? {
+                ...item,
+                likes: (item.likes || 0) + 1
+              }
+            : item
+        )
       );
 
       try {
-        const { data, error: likeError } = await supabase.rpc("like_confession", {p_uuid: id});
+        const { data, error: likeError } = await supabase.rpc(
+          "like_confession",
+          { p_uuid: id }
+        );
 
         if (likeError) throw likeError;
 
         if (data && typeof data.likes === "number") {
           setConfessions(items =>
-            items.map(item => String(item.uuid) === id ? {
-              ...item,
-              likes: data.likes
-            } : item)
+            items.map(item =>
+              String(item.uuid) === id
+                ? {
+                    ...item,
+                    likes: data.likes
+                  }
+                : item
+            )
           );
-
           setAnnouncements(items =>
-            items.map(item => String(item.uuid) === id ? {...item, likes: data.likes}: item)
+            items.map(item =>
+              String(item.uuid) === id
+                ? { ...item, likes: data.likes }
+                : item
+            )
           );
         }
       } catch (likeError) {
         console.error("Lỗi cập nhật lượt thích:", likeError);
 
         setLiked(current => current.filter(value => value !== id));
-
         localStorage.setItem(LIKED_KEY, JSON.stringify(liked));
 
         setConfessions(items =>
-          items.map(item => String(item.uuid) === id ? {
-            ...item,
-            likes: Math.max(0, (item.likes || 1) - 1)
-          } : item)
+          items.map(item =>
+            String(item.uuid) === id
+              ? {
+                  ...item,
+                  likes: Math.max(0, (item.likes || 1) - 1)
+                }
+              : item
+          )
         );
 
         setAnnouncements(items =>
-          items.map(item => String(item.uuid) === id ? {
-            ...item,
-            likes: Math.max(0, (item.likes || 1) - 1)
-          } : item)
+          items.map(item =>
+            String(item.uuid) === id
+              ? {
+                  ...item,
+                  likes: Math.max(0, (item.likes || 1) - 1)
+                }
+              : item
+          )
         );
       }
     },
     [liked]
   );
 
-  const addComment = useCallback(
-    async (uuid, text) => {
-      const value = String(text || "").trim();
+  const addComment = useCallback(async (uuid, text) => {
+    const value = String(text || "").trim();
 
-      if (!value) return;
+    if (!value) return;
 
-      try {
-        const { data, error: commentError } = await supabase.rpc("add_comment", {p_uuid: uuid, p_content: value});
+    try {
+      const { data, error: commentError } = await supabase.rpc(
+        "add_comment",
+        {
+          p_uuid: uuid,
+          p_content: value
+        }
+      );
 
-        if (commentError) throw commentError;
+      if (commentError) throw commentError;
 
-        const returnedComment = data?.comment;
+      const returnedComment = data?.comment;
+      const comment = {
+        id: returnedComment?.id ?? Date.now(),
+        content: returnedComment?.content ?? value,
+        time: returnedComment?.time ?? new Date().toISOString()
+      };
 
-        const comment = {
-          id: returnedComment?.id ?? Date.now(),
-          content: returnedComment?.content ?? value,
-          time: returnedComment?.time ?? new Date().toISOString()
-        };
-
-        setConfessions(items =>
-          items.map(item => String(item.uuid) === String(uuid) ? {
-            ...item,
-            comments: [...(item.comments || []), comment],
-            commentCount: (item.commentCount || 0) + 1
-          } : item)
-        );
-      } catch (commentError) {
-        console.error("Comment submit error:",commentError);
-
-        alert("Không thể gửi bình luận. Vui lòng thử lại sau.");
-      }
-    },
-    []
-  );
+      setConfessions(items =>
+        items.map(item =>
+          String(item.uuid) === String(uuid)
+            ? {
+                ...item,
+                comments: [...(item.comments || []), comment],
+                commentCount: (item.commentCount || 0) + 1
+              }
+            : item
+        )
+      );
+    } catch (commentError) {
+      console.error("Comment submit error:", commentError);
+      alert("Không thể gửi bình luận. Vui lòng thử lại sau.");
+    }
+  }, []);
 
   const virtualRows = useMemo(() => {
-  const rows = [];
-  let currentDate = null;
-  let currentGroup = null;
+    const rows = [];
+    let currentDate = null;
+    let currentGroup = null;
 
-  for (const item of confessions) {
-    const date =
-      item.dateLabel ||
-      (item.time ? formatDate(item.time) : "Khác");
+    for (const item of confessions) {
+      const date =
+        item.dateLabel || (item.time ? formatDate(item.time) : "Khác");
 
-    if (date !== currentDate) {
-      currentDate = date;
-      currentGroup = {
-        type: "date",
-        key: `date:${date}`,
-        date,
-        items: []
-      };
-      rows.push(currentGroup);
+      if (date !== currentDate) {
+        currentDate = date;
+        currentGroup = {
+          type: "date",
+          key: `date:${date}`,
+          date,
+          items: []
+        };
+        rows.push(currentGroup);
+      }
+
+      currentGroup.items.push(item);
     }
 
-    currentGroup.items.push(item);
-  }
+    if (hasMore) {
+      rows.push({
+        type: "loader",
+        key: "loader"
+      });
+    }
 
-  if (hasMore) {
-    rows.push({
-      type: "loader",
-      key: "loader"
-    });
-  }
-
-  return rows;
-}, [confessions, hasMore]);
+    return rows;
+  }, [confessions, hasMore]);
 
   const virtualizer = useWindowVirtualizer({
     count: virtualRows.length,
     estimateSize: index => {
-  const row = virtualRows[index];
+      const row = virtualRows[index];
 
-  if (row?.type === "loader") {
-    return 64;
-  }
+      if (row?.type === "loader") {
+        return 64;
+      }
 
-  if (row?.type === "date") {
-    const cardHeight =
-      columns === 1 ? 250 : 240;
+      if (row?.type === "date") {
+        const cardHeight = columns === 1 ? 250 : 240;
+        const gap = 16;
+        const rows = Math.ceil(row.items.length / columns);
 
-    const gap = 16;
-    const rows =
-      Math.ceil(row.items.length / columns);
+        return (
+          20 +
+          42 +
+          rows * cardHeight +
+          Math.max(0, rows - 1) * gap +
+          20
+        );
+      }
 
-    return (
-      20 +
-      42 +
-      rows * cardHeight +
-      Math.max(0, rows - 1) * gap +
-      20
-    );
-  }
-
-  return 250;
-},
+      return 250;
+    },
     overscan: 5,
     scrollMargin,
-    getItemKey: index =>
-      virtualRows[index]?.key ?? index
+    getItemKey: index => virtualRows[index]?.key ?? index
   });
 
   const virtualItems = virtualizer.getVirtualItems();
@@ -682,13 +725,7 @@ export default function App() {
     if (last.index >= virtualRows.length - 3 && hasMore && !loadingMore) {
       loadMore();
     }
-  }, [
-    virtualItems,
-    virtualRows.length,
-    hasMore,
-    loadingMore,
-    loadMore
-  ]);
+  }, [virtualItems, virtualRows.length, hasMore, loadingMore, loadMore]);
 
   const submitConfession = async event => {
     event.preventDefault();
@@ -701,7 +738,9 @@ export default function App() {
     }
 
     if (value.length > MAX_LENGTH) {
-      setFormError(`Nội dung quá dài, giới hạn tối đa là ${MAX_LENGTH} ký tự.`);
+      setFormError(
+        `Nội dung quá dài, giới hạn tối đa là ${MAX_LENGTH} ký tự.`
+      );
       return;
     }
 
@@ -709,23 +748,25 @@ export default function App() {
     setFormError("");
 
     try {
-      const { error: submitError } = await supabase.from("confessions").insert({
-        content: value,
-        status: "pending"
-      });
+      const { error: submitError } = await supabase
+        .from("confessions")
+        .insert({
+          content: value,
+          status: "pending"
+        });
 
-      if (submitError) {
-        throw submitError;
-      }
+      if (submitError) throw submitError;
 
-      alert("Gửi bài thành công! Bài viết của bạn sẽ được hiển thị sau khi admin kiểm duyệt.");
-
+      alert(
+        "Gửi bài thành công! Bài viết của bạn sẽ được hiển thị sau khi admin kiểm duyệt."
+      );
       setContent("");
       setMainEmojiOpen(false);
     } catch (submitError) {
       console.error("Lỗi gửi confession:", submitError);
-
-      alert("Đã xảy ra lỗi kết nối trong quá trình gửi. Vui lòng kiểm tra lại mạng hoặc thử lại sau!");
+      alert(
+        "Đã xảy ra lỗi kết nối trong quá trình gửi. Vui lòng kiểm tra lại mạng hoặc thử lại sau!"
+      );
     } finally {
       setSubmitting(false);
     }
@@ -742,7 +783,9 @@ export default function App() {
     }
 
     if (value.length > MAX_LENGTH) {
-      setFeedbackError(`Nội dung quá dài, giới hạn tối đa là ${MAX_LENGTH} ký tự.`);
+      setFeedbackError(
+        `Nội dung quá dài, giới hạn tối đa là ${MAX_LENGTH} ký tự.`
+      );
       return;
     }
 
@@ -750,48 +793,87 @@ export default function App() {
     setFeedbackError("");
 
     try {
-      const { error: feedbackSubmitError } =
-        await supabase.from("feedback").insert({content: value});
+      const { error: feedbackSubmitError } = await supabase
+        .from("feedback")
+        .insert({ content: value });
 
-      if (feedbackSubmitError) {
-        throw feedbackSubmitError;
-      }
+      if (feedbackSubmitError) throw feedbackSubmitError;
 
       setFeedback("");
       setFeedbackError("");
       setFeedbackOpen(false);
-
       alert("Cảm ơn bạn! Góp ý đã được gửi thành công.");
     } catch (feedbackSubmitError) {
       console.error("Lỗi gửi góp ý:", feedbackSubmitError);
-
       setFeedbackError("Không thể gửi góp ý. Vui lòng thử lại sau.");
     } finally {
       setFeedbackLoading(false);
     }
   };
 
+  const resultTitle =
+    selectedCake === "banh-dau-xanh"
+      ? "Bạn đã chọn nhân Đậu xanh"
+      : "Bạn đã chọn nhân Thập cẩm";
+
+  const resultMessage =
+    selectedCake === "banh-dau-xanh" ? (
+      <>
+        Một chút dịu dàng, một chút bình yên.
+        <br />
+        Mong tâm sự hôm nay của bạn cũng nhẹ nhàng như chiếc bánh này.
+      </>
+    ) : (
+      <>
+        Đủ vị, đủ cảm xúc, và thật chân thành.
+        <br />
+        Chúc tâm sự hôm nay của bạn được lắng nghe.
+      </>
+    );
+
   return (
     <>
       <div className="festival_sky" aria-hidden="true">
         <div className="floating_lanterns stars_variant">
           {[1, 2, 3, 4, 5].map(index => (
-            <div className={`lantern lantern_${index}`} key={`star-lantern-${index}`}>
+            <div
+              className={`lantern lantern_${index}`}
+              key={`star-lantern-${index}`}
+            >
               <img className="light lantern_sprite" src={lanternLight} alt="" />
               <img className="dark lantern_sprite" src={lanternDark} alt="" />
-              <img className="light lantern_charm" src={starSmallLight} alt="" />
-              <img className="dark lantern_charm" src={starSmallDark} alt="" />
+              <img
+                className="light lantern_charm"
+                src={starSmallLight}
+                alt=""
+              />
+              <img
+                className="dark lantern_charm"
+                src={starSmallDark}
+                alt=""
+              />
             </div>
           ))}
         </div>
 
         <div className="floating_lanterns flowers_variant">
           {[1, 2, 3, 4, 5].map(index => (
-            <div className={`lantern lantern_${index}`} key={`flower-lantern-${index}`}>
+            <div
+              className={`lantern lantern_${index}`}
+              key={`flower-lantern-${index}`}
+            >
               <img className="light lantern_sprite" src={lanternLight} alt="" />
               <img className="dark lantern_sprite" src={lanternDark} alt="" />
-              <img className="light lantern_charm" src={flowerLight} alt="" />
-              <img className="dark lantern_charm" src={flowerDark} alt="" />
+              <img
+                className="light lantern_charm"
+                src={flowerLight}
+                alt=""
+              />
+              <img
+                className="dark lantern_charm"
+                src={flowerDark}
+                alt=""
+              />
             </div>
           ))}
         </div>
@@ -815,12 +897,10 @@ export default function App() {
           <img className="light" src={cloudLight} alt="" />
           <img className="dark" src={cloudDark} alt="" />
         </div>
-
         <div className="sky_cloud cloud_two">
           <img className="light" src={cloudLight} alt="" />
           <img className="dark" src={cloudDark} alt="" />
         </div>
-
         <div className="sky_cloud cloud_three">
           <img className="light" src={cloudLight} alt="" />
           <img className="dark" src={cloudDark} alt="" />
@@ -830,12 +910,12 @@ export default function App() {
           <img className="light" src={bambooLight} alt="" />
           <img className="dark" src={bambooDark} alt="" />
         </div>
-
         <div className="sky_bamboo bamboo_left">
           <img className="light" src={bambooLight} alt="" />
           <img className="dark" src={bambooDark} alt="" />
         </div>
       </div>
+
       <div className="app_container">
         <header className="hero_section">
           <div className="hero_lanterns" aria-hidden="true">
@@ -867,14 +947,16 @@ export default function App() {
             title="Chuyển đổi giao diện"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           >
-            <i className={`fa-solid fa-${theme === "dark" ? "sun" : "moon"}`}/>
+            <i
+              className={`fa-solid fa-${theme === "dark" ? "sun" : "moon"}`}
+            />
             <span className="theme_text">
               {theme === "dark" ? "Chế độ sáng" : "Chế độ tối"}
             </span>
           </button>
 
           <div id="picture">
-            <img src={incognitoLogo} alt="incognito logo"/>
+            <img src={incognitoLogo} alt="incognito logo" />
           </div>
 
           <div className="header_titles">
@@ -887,7 +969,10 @@ export default function App() {
 
           <div id="chu_thich">
             <i className="fa-solid fa-circle-info info_icon" />
-            <span style={{textAlign: "center"}}>Nơi chia sẻ ẩn danh tâm tư, kỷ niệm học đường một cách tự do và có chừng mực.</span>
+            <span style={{ textAlign: "center" }}>
+              Nơi chia sẻ ẩn danh tâm tư, kỷ niệm học đường một cách tự do và có
+              chừng mực.
+            </span>
           </div>
         </header>
 
@@ -903,6 +988,76 @@ export default function App() {
         />
 
         <section className="card_wrapper">
+          {cakeChoiceOpen && (
+            <div className="cake_choice_panel">
+              <div className="cake_choice_content">
+                <div
+                  className="cake_choice_visual"
+                  style={{
+                    flex: "0 0 38%",
+                    minHeight: 180,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                >
+                  <img
+                  src={chooseOne}
+                    className="cake_choice_image"
+                    alt="Hình bánh Trung Thu"
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      maxWidth: 360,
+                      maxHeight: 240,
+                      objectFit: "contain"
+                    }}
+                  />
+                </div>
+
+                <div
+                  className="cake_choice_main"
+                  style={{ flex: "1 1 62%" }}
+                >
+                  <h2>Hôm nay gửi tâm sự cùng bánh nào?</h2>
+                  <p className="cake_choice_subtitle">
+                    Chọn một chiếc bánh đồng hành cùng tâm sự của bạn.
+                  </p>
+
+                  <div className="cake_choice_grid">
+                    <button
+                      type="button"
+                      className="cake_choice_option cake_green"
+                      onClick={() => chooseCake("banh-dau-xanh")}
+                    >
+                      <span className="cake_visual" aria-hidden="true">
+                        🟢
+                      </span>
+                      <span className="cake_name">Nhân Đậu xanh</span>
+                      <span className="cake_description">
+                        Dịu dàng · Bình yên
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="cake_choice_option cake_mixed"
+                      onClick={() => chooseCake("banh-thap-cam")}
+                    >
+                      <span className="cake_visual" aria-hidden="true">
+                        🟠
+                      </span>
+                      <span className="cake_name">Nhân Thập cẩm</span>
+                      <span className="cake_description">
+                        Đậm vị · Chân thật
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div id="send_confession">
             <h3>
               <i className="fa-solid fa-paper-plane" />{" "}
@@ -951,17 +1106,19 @@ export default function App() {
               </div>
 
               <button type="submit" disabled={submitting}>
-                <span>
-                  {submitting ? "Đang gửi..." : "Gửi bài"}
-                </span>
-                <i className={`fa-solid fa-${ submitting ? "spinner fa-spin" : "arrow-up-from-bracket" }`}/>
+                <span>{submitting ? "Đang gửi..." : "Gửi bài"}</span>
+                <i
+                  className={`fa-solid fa-${
+                    submitting
+                      ? "spinner fa-spin"
+                      : "arrow-up-from-bracket"
+                  }`}
+                />
               </button>
             </div>
           </form>
 
-          <p id="form_error">
-            {formError}
-          </p>
+          <p id="form_error">{formError}</p>
         </section>
 
         <section id="search_container">
@@ -992,115 +1149,112 @@ export default function App() {
 
         <main id="confession_list" ref={listRef}>
           {initialLoading ? (
-            <p style={{
-              textAlign: "center",
-              color: "var(--text-muted)",
-              padding: 20
-            }}>
+            <p
+              style={{
+                textAlign: "center",
+                color: "var(--text-muted)",
+                padding: 20
+              }}
+            >
               Đang tải...
             </p>
           ) : loadError ? (
-            <p style={{
-              textAlign: "center",
-              color: "var(--text-muted)",
-              padding: 20
-            }}>
+            <p
+              style={{
+                textAlign: "center",
+                color: "var(--text-muted)",
+                padding: 20
+              }}
+            >
               {loadError}
             </p>
           ) : confessions.length === 0 ? (
-            <p style={{
-              textAlign: "center",
-              color: "var(--text-muted)",
-              padding: 20
-            }}>
+            <p
+              style={{
+                textAlign: "center",
+                color: "var(--text-muted)",
+                padding: 20
+              }}
+            >
               {search.trim() || dateSearch.trim()
                 ? "Không tìm thấy bài viết phù hợp với điều kiện tìm kiếm."
                 : "Chưa có bài viết nào được phê duyệt."}
             </p>
           ) : (
             <>
-              <div style={{
-                position: "relative",
-                width: "100%",
-                height: `${virtualizer.getTotalSize()}px`
-              }}>
-                {virtualItems.map(
-                  virtualItem => {
-                    const row = virtualRows[virtualItem.index];
+              <div
+                style={{
+                  position: "relative",
+                  width: "100%",
+                  height: `${virtualizer.getTotalSize()}px`
+                }}
+              >
+                {virtualItems.map(virtualItem => {
+                  const row = virtualRows[virtualItem.index];
+                  if (!row) return null;
 
-                    if (!row) return null;
-
-                    return (
-                      
-                      <div
-                        key={virtualItem.key}
-                        data-index={virtualItem.index}
-                        ref={virtualizer.measureElement}
-                        style={{
-                          position: "absolute",
-                          top:
-                            virtualItem.start -
-                            virtualizer.options.scrollMargin,
-                          left: 0,
-                          width: "100%",
-                          paddingBottom: 22
-                        }}
-                      >
-                        {row.type === "date" && (
-                          <div className="date_block">
-                            <div className="date_block_header">
-                              <span>📅 Ngày {row.date}</span>
-                            </div>
-
-                            <div
-                              className="date_block_grid"
-                              style={{
-                                gridTemplateColumns:
-                                  `repeat(${columns}, minmax(0, 1fr))`
-                              }}
-                            >
-                              {row.items.map(item => (
-                                <ConfessionCard
-                                  key={item.uuid}
-                                  confession={item}
-                                  expanded={
-                                    expandedId ===
-                                    String(item.uuid)
-                                  }
-                                  liked={liked.includes(
-                                    String(item.uuid)
-                                  )}
-                                  onOpen={setExpandedId}
-                                  onClose={() =>
-                                    setExpandedId(null)
-                                  }
-                                  onLike={like}
-                                  onComment={addComment}
-                                  fetchComments={fetchComments}
-                                />
-                              ))}
-                            </div>
+                  return (
+                    <div
+                      key={virtualItem.key}
+                      data-index={virtualItem.index}
+                      ref={virtualizer.measureElement}
+                      style={{
+                        position: "absolute",
+                        top:
+                          virtualItem.start - virtualizer.options.scrollMargin,
+                        left: 0,
+                        width: "100%",
+                        paddingBottom: 22
+                      }}
+                    >
+                      {row.type === "date" && (
+                        <div className="date_block">
+                          <div className="date_block_header">
+                            <span>📅 Ngày {row.date}</span>
                           </div>
-                        )}
 
-                        {row.type === "loader" && (
                           <div
+                            className="date_block_grid"
                             style={{
-                              minHeight: 48,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              color: "var(--text-muted)",
-                              fontSize: "0.85rem"
+                              gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`
                             }}
                           >
-                            {loadingMore ? "Đang tải thêm..." : ""}
+                            {row.items.map(item => (
+                              <ConfessionCard
+                                key={item.uuid}
+                                confession={item}
+                                expanded={
+                                  expandedId === String(item.uuid)
+                                }
+                                liked={liked.includes(String(item.uuid))}
+                                onOpen={setExpandedId}
+                                onClose={() => setExpandedId(null)}
+                                onLike={like}
+                                onComment={addComment}
+                                fetchComments={fetchComments}
+                              />
+                            ))}
                           </div>
-                        )}
-                      </div>
-                    );
-                  }
-                )}
+                        </div>
+                      )}
+
+                      {row.type === "loader" && (
+                        <div
+                          style={{
+                            minHeight: 48,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "var(--text-muted)",
+                            fontSize: "0.85rem"
+                          }}
+                        >
+                          {loadingMore ? "Đang tải thêm..." : ""}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               <div
@@ -1113,8 +1267,7 @@ export default function App() {
                 }}
               >
                 {totalCount > 0
-                  ? `${confessions.length.toLocaleString("vi-VN")} 
-                  / ${totalCount.toLocaleString("vi-VN")} confession`
+                  ? `${confessions.length.toLocaleString("vi-VN")} / ${totalCount.toLocaleString("vi-VN")} confession`
                   : ""}
               </div>
             </>
@@ -1128,10 +1281,31 @@ export default function App() {
         onClick={() => setExpandedId(null)}
       />
 
+      {/* Popup shown immediately after a selection */}
       <Modal
-        open={readmeOpen}
-        onClose={() => setReadmeOpen(false)}
+        open={cakeResultOpen}
+        onClose={() => setCakeResultOpen(false)}
+        className={`cake_result_modal ${selectedCake || ""}`}
       >
+        <div className="cake_result_content">
+          <div className="cake_result_icon" aria-hidden="true">
+            {selectedCake === "banh-dau-xanh" ? "💚🥮" : "🧡🥮"}
+          </div>
+
+          <h2>{resultTitle}</h2>
+          <p>{resultMessage}</p>
+
+          <button
+            type="button"
+            className="cake_result_button"
+            onClick={() => setCakeResultOpen(false)}
+          >
+            Bắt đầu viết tâm sự
+          </button>
+        </div>
+      </Modal>
+
+      <Modal open={readmeOpen} onClose={() => setReadmeOpen(false)}>
         <button
           type="button"
           className="close_readme_btn"
@@ -1144,7 +1318,7 @@ export default function App() {
         <h2>
           <i
             className="fa-solid fa-book-open"
-            style={{color: "var(--accent-color)"}}
+            style={{ color: "var(--accent-color)" }}
           />{" "}
           Hướng dẫn sử dụng & Giới thiệu
         </h2>
@@ -1186,9 +1360,7 @@ export default function App() {
         <h2>
           <i
             className="fa-solid fa-comment-dots"
-            style={{
-              color: "var(--accent-color)"
-            }}
+            style={{ color: "var(--accent-color)" }}
           />{" "}
           Gửi góp ý
         </h2>
@@ -1198,9 +1370,7 @@ export default function App() {
           autoComplete="off"
           onSubmit={submitFeedback}
         >
-          <label htmlFor="feedback_input">
-            Chia sẻ góp ý của bạn
-          </label>
+          <label htmlFor="feedback_input">Chia sẻ góp ý của bạn</label>
 
           <textarea
             id="feedback_input"
@@ -1214,9 +1384,7 @@ export default function App() {
             }}
           />
 
-          <p id="feedback_error">
-            {feedbackError}
-          </p>
+          <p id="feedback_error">{feedbackError}</p>
 
           <button
             type="submit"

@@ -43,3 +43,14 @@
   0% { transform: translateX(-10%); }
   100% { transform: translateX(110%); }
 }
+
+@keyframes cakeChoiceAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
