@@ -14,12 +14,14 @@
   --radius-lg: #{$radius-lg};
   --radius-md: #{$radius-md};
   --radius-sm: #{$radius-sm};
+  --festival-gold: #d69b32;
+  --festival-gold-soft: #fff0c7;
 }
 
 [data-theme="dark"] {
-  --primary-color: #fb7185;
+  --primary-color: #f0715b;
   --primary-hover: #{$primary-color};
-  --accent-color: #818cf8;
+  --accent-color: #f2b84b;
   --bg-gradient: #{$bg-gradient-dark};
   --card-bg: #{$card-bg-dark};
   --card-border: #{$card-border-dark};
@@ -27,6 +29,8 @@
   --text-muted: #{$text-muted-dark};
   --shadow-sm: #{$shadow-sm-dark};
   --shadow-md: #{$shadow-md-dark};
+  --festival-gold: #f2c866;
+  --festival-gold-soft: #3d2d2b;
 
   #chu_thich {
     background: rgba(159, 18, 57, 0.2);

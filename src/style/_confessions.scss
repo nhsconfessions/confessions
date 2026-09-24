@@ -7,7 +7,6 @@
 }
 
 .date_block {
-  background: var(--card-bg);
   border: 2px solid var(--card-border);
   border-radius: var(--radius-lg);
   padding: 20px;
@@ -58,6 +57,88 @@
   height: 240px;
   overflow: hidden;
 
+  .box_stars {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .box_star {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    color: var(--festival-gold);
+    font-size: 16px;
+    text-shadow: 0 0 8px rgba(242, 200, 102, 0.7);
+    animation: twinkle 3s ease-in-out infinite;
+    z-index: -999;
+
+    &_one { top: 12%; left: 8%; }
+    &_two { top: 22%; right: 10%; animation-delay: -1s; }
+    &_three { bottom: 12%; right: 18%; animation-delay: -2s; }
+    &_four { bottom: 26%; left: 14%; animation-delay: -.5s; }
+    &_five { top: 48%; right: 5%; animation-delay: -1.5s; }
+  }
+
+  .modal_lanterns,
+  .modal_clouds {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .modal_lantern {
+    position: absolute;
+    top: -18px;
+    width: 42px;
+    height: 68px;
+    border-radius: 45% 45% 38% 38%;
+    background: linear-gradient(90deg, #c94f35, #f27a4d 45%, #b83d2e);
+    box-shadow: 0 5px 12px rgba(111, 38, 25, .2);
+    animation: sway 4s ease-in-out infinite;
+    z-index: -999;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      width: 1px;
+      height: 14px;
+      background: #8f5b27;
+    }
+
+    &_left { left: 18px; }
+    &_right { right: 18px; animation-delay: -2s; }
+  }
+
+  .modal_cloud {
+    position: absolute;
+    width: 92px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--festival-gold-soft);
+    opacity: .35;
+    animation: driftSlow 25s linear infinite;
+
+    &::before,
+    &::after {
+      content: "";
+      position: absolute;
+      bottom: 8px;
+      border-radius: 50%;
+      background: inherit;
+    }
+
+    &::before { left: 18px; width: 34px; height: 34px; }
+    &::after { left: 46px; width: 28px; height: 28px; }
+
+    &_top { top: 20%; left: -100px; }
+    &_bottom { bottom: 15%; left: -180px; animation-delay: -12s; }
+  }
+
   &:hover {
     transform: translateY(-2px);
     border-color: #64748b;
@@ -107,6 +188,12 @@
     display: flex !important;
     flex-direction: column !important;
     animation: modalPopInConfession 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+    .box_star {
+      width: 18px;
+      height: 18px;
+      font-size: 18px;
+    }
 
     .close_modal_btn {
       display: flex;
@@ -251,4 +338,3 @@
     opacity: 0.8;
   }
 }
-

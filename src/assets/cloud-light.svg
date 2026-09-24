@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 140" role="img" aria-labelledby="cloud-light-title">
+  <defs>
+    <path id="puff" d="M38 100C24 100 14 91 14 79c0-11 9-20 22-21 3-17 19-29 39-29 14 0 26 7 33 18 7-7 17-11 28-11 18 0 32 11 35 26 15 1 26 11 26 23 0 10-9 15-21 15H38z"/>
+  </defs>
+  <use href="#puff" transform="translate(0 5)" fill="#edd9b2"/>
+  <use href="#puff" fill="#fffdf8" stroke="#e7cda0" stroke-width="2.5"/>
+  <use href="#puff" transform="translate(150 20) scale(0.4)" fill="#fffdf8" stroke="#e7cda0" stroke-width="5"/>
+</svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-labelledby="stars-light-title">
+  <defs>
+    <path id="sparkle" d="M0 -14 C2 -4 4 -2 14 0 C4 2 2 4 0 14 C-2 4 -4 2 -14 0 C-4 -2 -2 -4 0 -14 Z"/>
+  </defs>
+  <use href="#sparkle" transform="translate(60 50)" fill="#d69b32" opacity=".85"/>
+  <use href="#sparkle" transform="translate(180 90) scale(.6)" fill="#d69b32" opacity=".6"/>
+  <use href="#sparkle" transform="translate(120 170) scale(.45)" fill="#c98d2b" opacity=".55"/>
+  <use href="#sparkle" transform="translate(200 190) scale(.8)" fill="#d69b32" opacity=".75"/>
+  <circle cx="95" cy="105" r="3" fill="#d69b32" opacity=".7"/>
+  <circle cx="150" cy="40" r="2.4" fill="#d69b32" opacity=".55"/>
+  <circle cx="40" cy="150" r="2.8" fill="#d69b32" opacity=".6"/>
+  <circle cx="210" cy="140" r="2" fill="#d69b32" opacity=".5"/>
+  <circle cx="75" cy="205" r="2.2" fill="#d69b32" opacity=".5"/>
+  <circle cx="170" cy="215" r="2.6" fill="#d69b32" opacity=".6"/>
+</svg>

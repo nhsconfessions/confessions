@@ -1,7 +1,6 @@
 @use "variables" as *;
 
 .hero_section {
-  background: var(--card-bg);
   border: 2px solid var(--card-border);
   border-radius: var(--radius-lg);
   padding: 28px 24px;
@@ -12,10 +11,37 @@
   text-align: center;
   gap: 16px;
   position: relative;
+  overflow: visible;
+}
+
+.hero_lanterns {
+  position: absolute;
+  top: -24px;
+  left: 0;
+  right: 0;
+  height: 80px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.hero_lantern {
+  position: absolute;
+  top: 0;
+  width: 42px;
+  transform-origin: top center;
+
+  img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  &.hero_lantern_one { left: 16%; transform: rotate(-8deg); }
+  &.hero_lantern_two { right: 17%; transform: rotate(8deg); }
+  &.hero_lantern_three { left: 50%; transform: translateX(-50%) rotate(-2deg); }
 }
 
 .card_wrapper {
-  background: var(--card-bg);
   border: 2px solid var(--card-border);
   border-radius: var(--radius-lg);
   padding: 22px 24px;
@@ -83,10 +109,79 @@
 .header_titles h1 {
   font-size: 2.2rem;
   font-weight: 800;
-  background: linear-gradient(135deg, $primary-hover, $accent-color);
+  background: linear-gradient(135deg, $primary-hover 20%, $accent-color 80%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   letter-spacing: -0.5px;
+}
+
+.festival_badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 7px;
+  padding: 5px 12px;
+  border: 1px solid var(--festival-gold);
+  border-radius: 999px;
+  color: #9a6817;
+  background: var(--festival-gold-soft);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+
+  i {
+    font-size: 0.65rem;
+  }
+}
+
+.mid_autumn_decor {
+  position: absolute;
+  right: 34px;
+  bottom: -22px;
+  width: 118px;
+  height: 168px;
+  pointer-events: none;
+  transform: rotate(4deg);
+
+  img {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 104px;
+    height: 138px;
+    filter: drop-shadow(0 8px 10px rgba(111, 38, 25, 0.22));
+  }
+}
+
+.mid_autumn_moon {
+  position: absolute;
+  top: -12px;
+  right: 2px;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: #ffd979;
+  box-shadow: 0 0 24px rgba(255, 217, 121, 0.65);
+}
+
+.mid_autumn_stars {
+  position: absolute;
+  top: 12px;
+  left: -5px;
+  color: var(--festival-gold);
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+[data-theme="dark"] {
+  .festival_badge {
+    color: #f7d98c;
+  }
+
+  .mid_autumn_decor {
+    filter: saturate(1.1);
+  }
 }
 
 h4 {
@@ -123,4 +218,3 @@ h4 {
     text-decoration: underline;
   }
 }
-

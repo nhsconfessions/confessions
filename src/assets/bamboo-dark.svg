@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 360" role="img" aria-labelledby="bamboo-dark-title">
+  <defs>
+    <linearGradient id="stalk" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#3d8a6e"/>
+      <stop offset=".5" stop-color="#2c6b57"/>
+      <stop offset="1" stop-color="#235245"/>
+    </linearGradient>
+    <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4c9a7d"/>
+      <stop offset="1" stop-color="#2f6b57"/>
+    </linearGradient>
+    <path id="leaf-blade" d="M0 0 C8 -9 22 -12 36 -7 C24 0 10 2 0 0 Z"/>
+  </defs>
+  <rect x="36" y="46" width="13" height="314" rx="6.5" fill="url(#stalk)" opacity=".8"/>
+  <rect x="33.5" y="100" width="18" height="7" rx="3.5" fill="#1b423a" opacity=".8"/>
+  <rect x="33.5" y="164" width="18" height="7" rx="3.5" fill="#1b423a" opacity=".8"/>
+  <rect x="33.5" y="228" width="18" height="7" rx="3.5" fill="#1b423a" opacity=".8"/>
+  <rect x="33.5" y="292" width="18" height="7" rx="3.5" fill="#1b423a" opacity=".8"/>
+  <use href="#leaf-blade" transform="translate(44 108) rotate(-30)" fill="url(#leaf)" stroke="#1f4f42" stroke-width="1"/>
+  <use href="#leaf-blade" transform="translate(44 106) rotate(10) scale(1.1)" fill="url(#leaf)" stroke="#1f4f42" stroke-width="1"/>
+  <rect x="122" y="26" width="12" height="334" rx="6" fill="url(#stalk)" opacity=".7"/>
+  <rect x="119.5" y="80" width="17" height="7" rx="3.5" fill="#1b423a" opacity=".7"/>
+  <rect x="119.5" y="144" width="17" height="7" rx="3.5" fill="#1b423a" opacity=".7"/>
+  <rect x="119.5" y="208" width="17" height="7" rx="3.5" fill="#1b423a" opacity=".7"/>
+  <rect x="119.5" y="272" width="17" height="7" rx="3.5" fill="#1b423a" opacity=".7"/>
+  <use href="#leaf-blade" transform="translate(128 88) rotate(-14) scale(1.05)" fill="url(#leaf)" stroke="#1f4f42" stroke-width="1"/>
+  <use href="#leaf-blade" transform="translate(128 86) rotate(28) scale(.9)" fill="url(#leaf)" stroke="#1f4f42" stroke-width="1"/>
+  <rect x="72" y="-6" width="16" height="366" rx="8" fill="url(#stalk)"/>
+  <rect x="69.5" y="58" width="21" height="8" rx="4" fill="#1b423a"/>
+  <rect x="69.5" y="122" width="21" height="8" rx="4" fill="#1b423a"/>
+  <rect x="69.5" y="186" width="21" height="8" rx="4" fill="#1b423a"/>
+  <rect x="69.5" y="250" width="21" height="8" rx="4" fill="#1b423a"/>
+  <rect x="69.5" y="314" width="21" height="8" rx="4" fill="#1b423a"/>
+  <rect x="75.5" y="0" width="3" height="360" rx="1.5" fill="#5cae8f" opacity=".5"/>
+  <use href="#leaf-blade" transform="translate(80 66) rotate(-38)" fill="url(#leaf)" stroke="#1f4f42" stroke-width="1.2"/>
+  <use href="#leaf-blade" transform="translate(80 64) rotate(-6) scale(1.2)" fill="url(#leaf)" stroke="#1f4f42" stroke-width="1"/>
+  <use href="#leaf-blade" transform="translate(80 66) rotate(30) scale(.95)" fill="url(#leaf)" stroke="#1f4f42" stroke-width="1.1"/>
+  <use href="#leaf-blade" transform="translate(80 130) rotate(-24) scale(1.1)" fill="url(#leaf)" stroke="#1f4f42" stroke-width="1"/>
+  <use href="#leaf-blade" transform="translate(80 128) rotate(18) scale(.85)" fill="url(#leaf)" stroke="#1f4f42" stroke-width="1.2"/>
+</svg>

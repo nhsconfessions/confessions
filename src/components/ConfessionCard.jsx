@@ -12,6 +12,22 @@ export default function ConfessionCard({ confession, liked, expanded, onOpen, on
   }, [confession.content]);
 
   return <div className={`box${important ? " announcement_box" : ""}${expanded ? " expanded modal_focused" : ""}`} onClick={() => !expanded && onOpen(confession.uuid)}>
+    <div className="box_stars" aria-hidden="true">
+      <i className="box_star box_star_one fa-solid fa-star" />
+      <i className="box_star box_star_two fa-solid fa-star" />
+      <i className="box_star box_star_three fa-solid fa-star" />
+      {expanded && <><i className="box_star box_star_four fa-solid fa-star" /><i className="box_star box_star_five fa-solid fa-star" /></>}
+    </div>
+    {expanded && <>
+      <div className="modal_lanterns" aria-hidden="true">
+        <i className="modal_lantern modal_lantern_left" />
+        <i className="modal_lantern modal_lantern_right" />
+      </div>
+      <div className="modal_clouds" aria-hidden="true">
+        <i className="modal_cloud modal_cloud_top" />
+        <i className="modal_cloud modal_cloud_bottom" />
+      </div>
+    </>}
     {expanded && <button type="button" className="close_modal_btn" title="Đóng" onClick={(event) => { event.stopPropagation(); onClose(); }}><i className="fa-solid fa-xmark" /></button>}
     <div className="confession_title">{important ? "📢 Thông báo" : `Confession #${String(confession.number || 0).padStart(3, "0")}`}</div>
     <div className="confession_content"><p ref={contentRef}>{confession.content}</p>{showReadMore && !expanded && <button type="button" className="read_more_btn" onClick={(event) => { event.stopPropagation(); onOpen(confession.uuid); }}>Xem thêm</button>}</div>
