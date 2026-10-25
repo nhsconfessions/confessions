@@ -1,12 +1,12 @@
 @use "variables" as *;
 
-@media (max-width: 960px) {
+@media (max-width: 1099px) {
   .date_block_grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 699px) {
   body {
     padding: 16px 10px 40px;
   }
@@ -95,3 +95,12 @@
   }
 }
 
+@media (max-width: 420px) {
+  #theme_toggle_btn {
+    padding: 6px 10px;
+
+    .theme_text {
+      display: none;
+    }
+  }
+}

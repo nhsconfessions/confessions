@@ -13,6 +13,7 @@ import { formatDate, readStoredLikes } from "./utils";
 import { supabase } from "./supabase";
 import Announcements from "./components/Announcements";
 import ConfessionCard from "./components/ConfessionCard";
+import ConfessionModal from "./components/ConfessionModal";
 import EmojiPicker from "./components/EmojiPicker";
 import Modal from "./components/Modal";
 import incognitoLogo from "./assets/incognito.svg";
@@ -34,7 +35,7 @@ function getColumnCount() {
 }
 
 function normalizeQuery(value) {
-  return String(value || "").replace("#", "").trim();
+  return String(value || "").replace(/#/g, "").trim();
 }
 
 function normalizeConfession(item) {
@@ -101,10 +102,16 @@ export default function App() {
   const offsetRef = useRef(0);
   const loadingMoreRef = useRef(false);
   const requestIdRef = useRef(0);
+  const expandedIdRef = useRef(expandedId);
+  const mainEmojiRef = useRef(null);
   const activeQueryRef = useRef({
     query: "",
     dateQuery: ""
   });
+
+  useEffect(() => {
+    expandedIdRef.current = expandedId;
+  }, [expandedId]);
 
   useEffect(() => {
     if (theme === "dark") {
@@ -116,14 +123,38 @@ export default function App() {
   }, [theme]);
 
   useEffect(() => {
-    document.body.classList.toggle(
-      "confession-modal-open",
-      Boolean(expandedId || readmeOpen || feedbackOpen)
-    );
+    const isModalOpen = Boolean(expandedId || readmeOpen || feedbackOpen);
+    document.documentElement.classList.toggle("confession-modal-open", isModalOpen);
+    document.body.classList.toggle("confession-modal-open", isModalOpen);
     return () => {
+      document.documentElement.classList.remove("confession-modal-open");
       document.body.classList.remove("confession-modal-open");
     };
   }, [expandedId, readmeOpen, feedbackOpen]);
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (event) => {
+      if (event.key === "Escape") {
+        if (expandedId) setExpandedId(null);
+        if (readmeOpen) setReadmeOpen(false);
+        if (feedbackOpen) setFeedbackOpen(false);
+        if (mainEmojiOpen) setMainEmojiOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [expandedId, readmeOpen, feedbackOpen, mainEmojiOpen]);
+
+  useEffect(() => {
+    if (!mainEmojiOpen) return;
+    const handleDocumentClick = (event) => {
+      if (mainEmojiRef.current && !mainEmojiRef.current.contains(event.target)) {
+        setMainEmojiOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleDocumentClick);
+    return () => document.removeEventListener("mousedown", handleDocumentClick);
+  }, [mainEmojiOpen]);
 
   useEffect(() => {
     const handleResize = () => setColumns(getColumnCount());
@@ -155,57 +186,57 @@ export default function App() {
   }, []);
 
   const fetchConfessionPage = useCallback(
-  async ({ query, dateQuery, offset, limit = PAGE_SIZE }) => {
-    if (!query && !dateQuery) {
-      const { data, count, error } = await supabase
-        .from("confessions")
-        .select(
-          "uuid, created_at, content, status, likes, comment_count, last_updated",
-          { count: "exact" }
-        )
-        .eq("status", "approved")
-        .order("created_at", { ascending: false })
-        .range(offset, offset + limit - 1);
+    async ({ query, dateQuery, offset, limit = PAGE_SIZE }) => {
+      if (!query && !dateQuery) {
+        const { data, count, error } = await supabase
+          .from("confessions")
+          .select(
+            "uuid, created_at, content, status, likes, comment_count, last_updated",
+            { count: "exact" }
+          )
+          .eq("status", "approved")
+          .order("created_at", { ascending: false })
+          .range(offset, offset + limit - 1);
+
+        if (error) throw error;
+
+        const total = count || 0;
+
+        const rows = (data || []).map((item, index) =>
+          normalizeConfession({
+            ...item,
+            display_number: total - offset - index
+          })
+        );
+
+        return { rows, total };
+      }
+
+      const { data, error } = await supabase.rpc(
+        "search_confessions",
+        {
+          p_query: query,
+          p_date_query: dateQuery,
+          p_limit: limit,
+          p_offset: offset
+        }
+      );
 
       if (error) throw error;
 
-      const total = count || 0;
+      const total =
+        Array.isArray(data) && data.length > 0
+          ? Number(data[0].total_count) || 0
+          : 0;
 
-      const rows = (data || []).map((item, index) =>
-        normalizeConfession({
-          ...item,
-          display_number: total - offset - index
-        })
-      );
+      const rows = Array.isArray(data)
+        ? data.map(normalizeConfession)
+        : [];
 
       return { rows, total };
-    }
-
-    const { data, error } = await supabase.rpc(
-      "search_confessions",
-      {
-        p_query: query,
-        p_date_query: dateQuery,
-        p_limit: limit,
-        p_offset: offset
-      }
-    );
-
-    if (error) throw error;
-
-    const total =
-      Array.isArray(data) && data.length > 0
-        ? Number(data[0].total_count) || 0
-        : 0;
-
-    const rows = Array.isArray(data)
-      ? data.map(normalizeConfession)
-      : [];
-
-    return { rows, total };
-  },
-  []
-);
+    },
+    []
+  );
 
   const fetchAnnouncements = useCallback(async () => {
     const { data, error: announcementError } = await supabase
@@ -228,79 +259,79 @@ export default function App() {
   }, []);
 
   const reloadList = useCallback(
-  async (query, dateQuery) => {
-    const requestId = ++requestIdRef.current;
+    async (query, dateQuery) => {
+      const requestId = ++requestIdRef.current;
 
-    activeQueryRef.current = {
-      query,
-      dateQuery
-    };
-
-    offsetRef.current = 0;
-    setInitialLoading(true);
-    setLoadError("");
-
-    const announcementPromise = fetchAnnouncements().catch(error => {
-      console.error("Announcement load error:", error);
-      return null;
-    });
-
-    try {
-      const confessionPage = await fetchConfessionPage({
+      activeQueryRef.current = {
         query,
-        dateQuery,
-        offset: 0,
-        limit: PAGE_SIZE
+        dateQuery
+      };
+
+      offsetRef.current = 0;
+      setInitialLoading(true);
+      setLoadError("");
+
+      const announcementPromise = fetchAnnouncements().catch(error => {
+        console.error("Announcement load error:", error);
+        return null;
       });
 
-      if (requestId !== requestIdRef.current) return;
+      try {
+        const confessionPage = await fetchConfessionPage({
+          query,
+          dateQuery,
+          offset: 0,
+          limit: PAGE_SIZE
+        });
 
-      setConfessions(confessionPage.rows);
-      setTotalCount(confessionPage.total);
-      offsetRef.current = confessionPage.rows.length;
-      setHasMore(offsetRef.current < confessionPage.total);
-      setInitialLoading(false);
+        if (requestId !== requestIdRef.current) return;
 
-      const announcementRows = await announcementPromise;
-
-      if (requestId !== requestIdRef.current) return;
-      if (announcementRows) {
-        setAnnouncements(announcementRows);
-      }
-    } catch (error) {
-      console.error("Supabase load error:", error);
-
-      if (requestId === requestIdRef.current) {
-        setLoadError(
-          "Không thể tải dữ liệu. Vui lòng thử lại sau."
-        );
+        setConfessions(confessionPage.rows);
+        setTotalCount(confessionPage.total);
+        offsetRef.current = confessionPage.rows.length;
+        setHasMore(offsetRef.current < confessionPage.total);
         setInitialLoading(false);
+
+        const announcementRows = await announcementPromise;
+
+        if (requestId !== requestIdRef.current) return;
+        if (announcementRows) {
+          setAnnouncements(announcementRows);
+        }
+      } catch (error) {
+        console.error("Supabase load error:", error);
+
+        if (requestId === requestIdRef.current) {
+          setLoadError(
+            "Không thể tải dữ liệu. Vui lòng thử lại sau."
+          );
+          setInitialLoading(false);
+        }
       }
-    }
-  },
-  [fetchConfessionPage, fetchAnnouncements]
-);
+    },
+    [fetchConfessionPage, fetchAnnouncements]
+  );
 
   useEffect(() => {
-  const query = normalizeQuery(search);
-  const dateQuery = normalizeQuery(dateSearch);
+    const query = normalizeQuery(search);
+    const dateQuery = normalizeQuery(dateSearch);
 
-  if (firstLoadRef.current) {
-    firstLoadRef.current = false;
-    reloadList(query, dateQuery);
-    return;
-  }
+    if (firstLoadRef.current) {
+      firstLoadRef.current = false;
+      reloadList(query, dateQuery);
+      return;
+    }
 
-  const timer = setTimeout(() => {
-    reloadList(query, dateQuery);
-  }, 300);
+    const timer = setTimeout(() => {
+      reloadList(query, dateQuery);
+    }, 300);
 
-  return () => clearTimeout(timer);
-}, [
-  search,
-  dateSearch,
-  reloadList
-]);
+    return () => clearTimeout(timer);
+  }, [
+    search,
+    dateSearch,
+    reloadList
+  ]);
 
   const loadMore = useCallback(async () => {
     if (loadingMoreRef.current || !hasMore) return;
@@ -381,10 +412,7 @@ export default function App() {
       setTotalCount(confessionPage.total);
 
       offsetRef.current = confessionPage.rows.length;
-
-      setHasMore(
-        offsetRef.current < confessionPage.total
-      );
+      setHasMore(offsetRef.current < confessionPage.total);
     } catch (refreshError) {
       console.error("Refresh error:", refreshError);
     }
@@ -396,9 +424,7 @@ export default function App() {
 
     const poll = async () => {
       if (cancelled) return;
-
       await refreshLoaded();
-
       if (!cancelled) {
         timer = setTimeout(poll, 15000);
       }
@@ -416,47 +442,11 @@ export default function App() {
 
     return () => {
       cancelled = true;
-
       if (timer) {
         clearTimeout(timer);
       }
-
       document.removeEventListener("visibilitychange", visibilityHandler);
     };
-  }, [refreshLoaded]);
-
-  useEffect(() => {
-    const channel = supabase
-      .channel("public-confessions")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "confessions"
-        },
-        () => {
-          refreshLoaded().catch(error => {
-            console.error("Realtime confession refresh error:", error);
-          });
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "comments"
-        },
-        () => {
-          refreshLoaded().catch(error => {
-            console.error("Realtime comment refresh error:", error);
-          });
-        }
-      )
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
   }, [refreshLoaded]);
 
   const fetchComments = useCallback(async uuid => {
@@ -488,6 +478,47 @@ export default function App() {
     }
   }, []);
 
+  useEffect(() => {
+    const channel = supabase
+      .channel("public-confessions")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "confessions"
+        },
+        () => {
+          refreshLoaded().catch(error => {
+            console.error("Realtime confession refresh error:", error);
+          });
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "comments"
+        },
+        (payload) => {
+          if (
+            expandedIdRef.current &&
+            payload?.new?.uuid &&
+            String(payload.new.uuid) === String(expandedIdRef.current)
+          ) {
+            fetchComments(expandedIdRef.current).catch(console.error);
+          }
+          refreshLoaded().catch(error => {
+            console.error("Realtime comment refresh error:", error);
+          });
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [refreshLoaded, fetchComments]);
+
   const like = useCallback(
     async uuid => {
       const id = String(uuid);
@@ -514,7 +545,7 @@ export default function App() {
       );
 
       try {
-        const { data, error: likeError } = await supabase.rpc("like_confession", {p_uuid: id});
+        const { data, error: likeError } = await supabase.rpc("like_confession", { p_uuid: id });
 
         if (likeError) throw likeError;
 
@@ -527,15 +558,17 @@ export default function App() {
           );
 
           setAnnouncements(items =>
-            items.map(item => String(item.uuid) === id ? {...item, likes: data.likes}: item)
+            items.map(item => String(item.uuid) === id ? { ...item, likes: data.likes } : item)
           );
         }
       } catch (likeError) {
         console.error("Lỗi cập nhật lượt thích:", likeError);
 
-        setLiked(current => current.filter(value => value !== id));
-
-        localStorage.setItem(LIKED_KEY, JSON.stringify(liked));
+        setLiked(current => {
+          const reverted = current.filter(value => value !== id);
+          localStorage.setItem(LIKED_KEY, JSON.stringify(reverted));
+          return reverted;
+        });
 
         setConfessions(items =>
           items.map(item => String(item.uuid) === id ? {
@@ -559,10 +592,13 @@ export default function App() {
     async (uuid, text) => {
       const value = String(text || "").trim();
 
-      if (!value) return;
+      if (!value) return false;
 
       try {
-        const { data, error: commentError } = await supabase.rpc("add_comment", {p_uuid: uuid, p_content: value});
+        const { data, error: commentError } = await supabase.rpc("add_comment", {
+          p_uuid: uuid,
+          p_content: value
+        });
 
         if (commentError) throw commentError;
 
@@ -581,81 +617,78 @@ export default function App() {
             commentCount: (item.commentCount || 0) + 1
           } : item)
         );
+        return true;
       } catch (commentError) {
-        console.error("Comment submit error:",commentError);
-
+        console.error("Comment submit error:", commentError);
         alert("Không thể gửi bình luận. Vui lòng thử lại sau.");
+        return false;
       }
     },
     []
   );
 
   const virtualRows = useMemo(() => {
-  const rows = [];
-  let currentDate = null;
-  let currentGroup = null;
+    const rows = [];
+    let currentDate = null;
+    let currentGroup = null;
 
-  for (const item of confessions) {
-    const date =
-      item.dateLabel ||
-      (item.time ? formatDate(item.time) : "Khác");
+    for (const item of confessions) {
+      const date =
+        item.dateLabel ||
+        (item.time ? formatDate(item.time) : "Khác");
 
-    if (date !== currentDate) {
-      currentDate = date;
-      currentGroup = {
-        type: "date",
-        key: `date:${date}`,
-        date,
-        items: []
-      };
-      rows.push(currentGroup);
+      if (date !== currentDate) {
+        currentDate = date;
+        currentGroup = {
+          type: "date",
+          key: `date:${date}`,
+          date,
+          items: []
+        };
+        rows.push(currentGroup);
+      }
+
+      currentGroup.items.push(item);
     }
 
-    currentGroup.items.push(item);
-  }
+    if (hasMore) {
+      rows.push({
+        type: "loader",
+        key: "loader"
+      });
+    }
 
-  if (hasMore) {
-    rows.push({
-      type: "loader",
-      key: "loader"
-    });
-  }
-
-  return rows;
-}, [confessions, hasMore]);
+    return rows;
+  }, [confessions, hasMore]);
 
   const virtualizer = useWindowVirtualizer({
     count: virtualRows.length,
     estimateSize: index => {
-  const row = virtualRows[index];
+      const row = virtualRows[index];
 
-  if (row?.type === "loader") {
-    return 64;
-  }
+      if (row?.type === "loader") {
+        return 64;
+      }
 
-  if (row?.type === "date") {
-    const cardHeight =
-      columns === 1 ? 250 : 240;
+      if (row?.type === "date") {
+        const cardHeight = columns === 1 ? 250 : 240;
+        const gap = 16;
+        const rows = Math.ceil(row.items.length / columns);
 
-    const gap = 16;
-    const rows =
-      Math.ceil(row.items.length / columns);
+        return (
+          20 +
+          42 +
+          rows * cardHeight +
+          Math.max(0, rows - 1) * gap +
+          20
+        );
+      }
 
-    return (
-      20 +
-      42 +
-      rows * cardHeight +
-      Math.max(0, rows - 1) * gap +
-      20
-    );
-  }
-
-  return 250;
-},
+      return 250;
+    },
     overscan: 5,
     scrollMargin,
-    getItemKey: index =>
-      virtualRows[index]?.key ?? index
+    getItemKey: index => virtualRows[index]?.key ?? index
   });
 
   const virtualItems = virtualizer.getVirtualItems();
@@ -710,7 +743,6 @@ export default function App() {
       setMainEmojiOpen(false);
     } catch (submitError) {
       console.error("Lỗi gửi confession:", submitError);
-
       alert("Đã xảy ra lỗi kết nối trong quá trình gửi. Vui lòng kiểm tra lại mạng hoặc thử lại sau!");
     } finally {
       setSubmitting(false);
@@ -737,7 +769,7 @@ export default function App() {
 
     try {
       const { error: feedbackSubmitError } =
-        await supabase.from("feedback").insert({content: value});
+        await supabase.from("feedback").insert({ content: value });
 
       if (feedbackSubmitError) {
         throw feedbackSubmitError;
@@ -750,12 +782,20 @@ export default function App() {
       alert("Cảm ơn bạn! Góp ý đã được gửi thành công.");
     } catch (feedbackSubmitError) {
       console.error("Lỗi gửi góp ý:", feedbackSubmitError);
-
       setFeedbackError("Không thể gửi góp ý. Vui lòng thử lại sau.");
     } finally {
       setFeedbackLoading(false);
     }
   };
+
+  const expandedConfession = useMemo(() => {
+    if (!expandedId) return null;
+    return (
+      confessions.find(item => String(item.uuid) === expandedId) ||
+      announcements.find(item => String(item.uuid) === expandedId) ||
+      null
+    );
+  }, [expandedId, confessions, announcements]);
 
   return (
     <>
@@ -764,6 +804,7 @@ export default function App() {
           <button
             id="readme_toggle_btn"
             title="Hướng dẫn sử dụng / README"
+            aria-label="Hướng dẫn sử dụng và giới thiệu"
             onClick={() => setReadmeOpen(true)}
           >
             <i className="fa-solid fa-book-open" />
@@ -773,16 +814,17 @@ export default function App() {
           <button
             id="theme_toggle_btn"
             title="Chuyển đổi giao diện"
+            aria-label={theme === "dark" ? "Chuyển sang chế độ sáng" : "Chuyển sang chế độ tối"}
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           >
-            <i className={`fa-solid fa-${theme === "dark" ? "sun" : "moon"}`}/>
+            <i className={`fa-solid fa-${theme === "dark" ? "sun" : "moon"}`} />
             <span className="theme_text">
               {theme === "dark" ? "Chế độ sáng" : "Chế độ tối"}
             </span>
           </button>
 
           <div id="picture">
-            <img src={incognitoLogo} alt="incognito logo"/>
+            <img src={incognitoLogo} alt="incognito logo" />
           </div>
 
           <div className="header_titles">
@@ -803,13 +845,9 @@ export default function App() {
 
         <Announcements
           announcements={announcements}
-          expandedId={expandedId}
           liked={liked}
           onOpen={setExpandedId}
-          onClose={() => setExpandedId(null)}
           onLike={like}
-          onComment={addComment}
-          fetchComments={fetchComments}
         />
 
         <section className="card_wrapper">
@@ -826,13 +864,14 @@ export default function App() {
             onSubmit={submitConfession}
           >
             <div className="input_group">
-              <div className="textarea_wrapper">
+              <div className="textarea_wrapper" ref={mainEmojiRef}>
                 <textarea
                   id="confession_input"
                   rows="2"
                   maxLength={MAX_LENGTH}
                   placeholder="Bạn có tâm sự gì?"
                   value={content}
+                  disabled={submitting}
                   onChange={event => {
                     setContent(event.target.value);
                     setFormError("");
@@ -843,6 +882,8 @@ export default function App() {
                   type="button"
                   className="emoji_toggle_btn inside_input"
                   title="Chọn biểu cảm"
+                  aria-label="Chọn biểu cảm"
+                  disabled={submitting}
                   onClick={() => setMainEmojiOpen(value => !value)}
                 >
                   <i className="fa-regular fa-face-smile" />
@@ -864,7 +905,7 @@ export default function App() {
                 <span>
                   {submitting ? "Đang gửi..." : "Gửi bài"}
                 </span>
-                <i className={`fa-solid fa-${ submitting ? "spinner fa-spin" : "arrow-up-from-bracket" }`}/>
+                <i className={`fa-solid fa-${submitting ? "spinner fa-spin" : "arrow-up-from-bracket"}`} />
               </button>
             </div>
           </form>
@@ -881,6 +922,7 @@ export default function App() {
               id="search_input"
               type="text"
               placeholder="Tìm kiếm theo mã ID (Ví dụ: #001, #002...)"
+              aria-label="Tìm kiếm theo mã ID"
               autoComplete="off"
               value={search}
               onChange={event => setSearch(event.target.value)}
@@ -893,6 +935,7 @@ export default function App() {
               id="search_date_input"
               type="text"
               placeholder="Tìm kiếm theo ngày (Ví dụ: #20/08/2026)"
+              aria-label="Tìm kiếm theo ngày"
               autoComplete="off"
               value={dateSearch}
               onChange={event => setDateSearch(event.target.value)}
@@ -941,7 +984,6 @@ export default function App() {
                     if (!row) return null;
 
                     return (
-                      
                       <div
                         key={virtualItem.key}
                         data-index={virtualItem.index}
@@ -973,20 +1015,11 @@ export default function App() {
                                 <ConfessionCard
                                   key={item.uuid}
                                   confession={item}
-                                  expanded={
-                                    expandedId ===
-                                    String(item.uuid)
-                                  }
                                   liked={liked.includes(
                                     String(item.uuid)
                                   )}
                                   onOpen={setExpandedId}
-                                  onClose={() =>
-                                    setExpandedId(null)
-                                  }
                                   onLike={like}
-                                  onComment={addComment}
-                                  fetchComments={fetchComments}
                                 />
                               ))}
                             </div>
@@ -1023,8 +1056,7 @@ export default function App() {
                 }}
               >
                 {totalCount > 0
-                  ? `${confessions.length.toLocaleString("vi-VN")} 
-                  / ${totalCount.toLocaleString("vi-VN")} confession`
+                  ? `${confessions.length.toLocaleString("vi-VN")} / ${totalCount.toLocaleString("vi-VN")} confession(s)`
                   : ""}
               </div>
             </>
@@ -1034,9 +1066,22 @@ export default function App() {
 
       <div
         id="confession_backdrop"
-        className={expandedId ? "active" : ""}
+        className={expandedConfession ? "active" : ""}
         onClick={() => setExpandedId(null)}
+        onWheel={(e) => e.preventDefault()}
+        onTouchMove={(e) => e.preventDefault()}
       />
+
+      {expandedConfession && (
+        <ConfessionModal
+          confession={expandedConfession}
+          liked={liked.includes(String(expandedConfession.uuid))}
+          onClose={() => setExpandedId(null)}
+          onLike={like}
+          onComment={addComment}
+          fetchComments={fetchComments}
+        />
+      )}
 
       <Modal
         open={readmeOpen}
@@ -1046,6 +1091,7 @@ export default function App() {
           type="button"
           className="close_readme_btn"
           title="Đóng bảng hướng dẫn"
+          aria-label="Đóng bảng hướng dẫn"
           onClick={() => setReadmeOpen(false)}
         >
           <i className="fa-solid fa-xmark" />
@@ -1054,7 +1100,7 @@ export default function App() {
         <h2>
           <i
             className="fa-solid fa-book-open"
-            style={{color: "var(--accent-color)"}}
+            style={{ color: "var(--accent-color)" }}
           />{" "}
           Hướng dẫn sử dụng & Giới thiệu
         </h2>
@@ -1088,6 +1134,7 @@ export default function App() {
           type="button"
           className="close_readme_btn"
           title="Đóng bảng góp ý"
+          aria-label="Đóng bảng góp ý"
           onClick={() => setFeedbackOpen(false)}
         >
           <i className="fa-solid fa-xmark" />

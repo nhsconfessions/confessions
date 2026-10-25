@@ -16,6 +16,7 @@ export const formatTime = (timestamp) => {
 };
 
 export const formatDate = (timestamp) => {
+  if (!timestamp) return "Khác";
   const date = new Date(timestamp);
   return Number.isNaN(date.getTime()) ? "Khác" : date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
 };

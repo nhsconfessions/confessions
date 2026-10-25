@@ -4,9 +4,9 @@
   width: 100%;
   min-width: 0;
   margin-bottom: 24px;
-  background: var(--bg-card, #ffffff);
+  background: var(--card-bg, #ffffff);
   border-radius: 12px;
-  border: 1px solid var(--border-color, #e5e7eb);
+  border: 1px solid var(--card-border, #e5e7eb);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   overflow: hidden;
 }
@@ -22,7 +22,7 @@
   border: none;
   font-size: 1.1rem;
   font-weight: 700;
-  color: var(--text-color, #111827);
+  color: var(--text-main, #111827);
   cursor: pointer;
   transition: background-color 0.2s ease;
 
@@ -94,8 +94,8 @@
 }
 
 .carousel_btn {
-  background: var(--bg-card, #ffffff);
-  border: 1px solid var(--border-color, #d1d5db);
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--card-border, #d1d5db);
   border-radius: 50%;
   width: 38px;
   height: 38px;
@@ -120,4 +120,3 @@
     color: #ffffff;
   }
 }
-

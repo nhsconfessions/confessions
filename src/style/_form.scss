@@ -42,6 +42,12 @@
       transform: translateY(-1px);
       box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
     }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
   }
 }
 
@@ -70,6 +76,10 @@
   &:focus {
     border-color: var(--accent-color);
     box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+  }
+
+  @media (max-width: 640px) {
+    font-size: 16px;
   }
 }
 
@@ -198,5 +208,8 @@
     border-color: var(--accent-color);
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
   }
-}
 
+  @media (max-width: 640px) {
+    font-size: 16px;
+  }
+}

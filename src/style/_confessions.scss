@@ -20,7 +20,7 @@
     color: var(--text-main);
     margin-bottom: 16px;
     padding-bottom: 10px;
-    border-bottom: 2px solid #e2e8f0;
+    border-bottom: 2px solid var(--card-border);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -68,71 +68,6 @@
     background: #ffe4e6;
     color: $primary-hover;
     border-color: #fecdd3;
-  }
-
-  &.expanded {
-    .confession_title {
-      background: #ffe4e6;
-      color: $primary-hover;
-      border-color: #fecdd3;
-    }
-
-    .confession_content p {
-      display: block;
-      -webkit-line-clamp: unset;
-      overflow: visible;
-    }
-
-    .read_more_btn {
-      display: none !important;
-    }
-  }
-
-  &.modal_focused {
-    --confession-card-height: min(600px, 95vh);
-    position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    width: 600px !important;
-    height: var(--confession-card-height) !important;
-    max-width: 95vw !important;
-    max-height: 95vh !important;
-    z-index: 999 !important;
-    overflow-y: hidden !important;
-    border-color: $primary-color;
-    border-width: 2px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    background: #ffffff;
-    display: flex !important;
-    flex-direction: column !important;
-    animation: modalPopInConfession 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-
-    .close_modal_btn {
-      display: flex;
-    }
-
-    .confession_content {
-      flex: 1 !important;
-      min-height: 0;
-      max-height: none !important;
-      overflow-y: auto !important;
-      padding-right: 6px;
-      @include custom-scrollbar;
-
-      p {
-        font-size: 1.1rem !important;
-        line-height: 1.7 !important;
-      }
-    }
-
-    .comment_list {
-      max-height: calc(var(--confession-card-height) * 0.3);
-    }
-
-    .comments_section {
-      flex-shrink: 0;
-    }
   }
 }
 
@@ -252,3 +187,304 @@
   }
 }
 
+/* ==========================================================================
+   Confession Modal
+   - Screens >= 860px: 2-box side-by-side split view
+   - Screens < 860px: Old layout with modern neutral coloring (removed red)
+   ========================================================================== */
+.confession_modal_wrapper {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 999;
+  overscroll-behavior: contain;
+  animation: modalPopInConfession 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+  /* ========================================================================
+     Large Screens (>= 860px): 2 Separate Side-by-Side Boxes
+     ======================================================================== */
+  @media (min-width: 860px) {
+    width: min(1040px, 94vw);
+    height: min(620px, 90vh);
+    max-height: 90vh;
+    display: flex;
+    gap: 20px;
+    align-items: stretch;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+
+    &.announcement_modal {
+      width: min(620px, 94vw);
+    }
+
+    .modal_box {
+      background: var(--card-bg);
+      border: 2px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .confession_pane {
+      flex: 1.15;
+      padding: 24px;
+      justify-content: space-between;
+
+      &.announcement_box .confession_title {
+        background: #ffe4e6;
+        color: $primary-hover;
+        border-color: #fecdd3;
+      }
+
+      .modal_pane_header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .pane_close_btn {
+        display: none;
+      }
+
+      .modal_content_scroll {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding-right: 8px;
+        @include custom-scrollbar;
+
+        p {
+          font-size: 1.08rem;
+          line-height: 1.7;
+          color: var(--text-main);
+          white-space: pre-wrap;
+          word-break: break-word;
+          display: block;
+          -webkit-line-clamp: unset;
+          overflow: visible;
+        }
+      }
+
+      .modal_pane_footer {
+        margin-top: 14px;
+
+        .confession_meta {
+          padding-top: 8px;
+          border-top: 1.5px dashed var(--card-border);
+        }
+
+        .confession_actions {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          margin-top: 10px;
+        }
+
+        .comment_count_badge {
+          font-size: 0.88rem;
+          font-weight: 600;
+          color: var(--text-muted);
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+        }
+      }
+    }
+
+    /* Single pane announcement modal close button */
+    &.announcement_modal .confession_pane .pane_close_btn {
+      display: flex;
+      position: static;
+    }
+
+    .comments_pane {
+      flex: 0.85;
+      padding: 20px 20px 16px;
+
+      .comments_pane_header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 12px;
+        border-bottom: 2px solid var(--card-border);
+        margin-bottom: 12px;
+      }
+
+      .comments_pane_title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-main);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        i {
+          color: var(--accent-color);
+        }
+      }
+
+      .comments_close_btn {
+        display: flex;
+        position: static;
+      }
+
+      .comments_pane_body {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+
+        .comments_section {
+          margin-top: 0;
+          padding-top: 0;
+          border-top: none;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+
+          .comment_list {
+            flex: 1;
+            min-height: 0;
+            max-height: none;
+            margin-bottom: 8px;
+          }
+        }
+      }
+    }
+  }
+
+  /* ========================================================================
+     Small Screens (< 860px): Old Layout with Modern Neutral Styling (No Red)
+     ======================================================================== */
+  @media (max-width: 859px) {
+    --confession-card-height: min(600px, 95vh);
+    width: 600px;
+    max-width: 95vw;
+    height: var(--confession-card-height);
+    max-height: 95vh;
+    background: var(--card-bg);
+    border: 2px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+
+    &.announcement_modal {
+      border-color: var(--primary-color);
+    }
+
+    .modal_box {
+      background: transparent !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+    }
+
+    .confession_pane {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+
+      &.announcement_box .confession_title {
+        background: #ffe4e6;
+        color: $primary-hover;
+        border-color: #fecdd3;
+      }
+
+      .modal_pane_header {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        margin-bottom: 8px;
+      }
+
+      .pane_close_btn {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        display: flex !important;
+        z-index: 1000;
+      }
+
+      .modal_content_scroll {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding-right: 6px;
+        @include custom-scrollbar;
+
+        p {
+          font-size: 1.1rem;
+          line-height: 1.7;
+          color: var(--text-main);
+          white-space: pre-wrap;
+          word-break: break-word;
+          display: block;
+          -webkit-line-clamp: unset;
+          overflow: visible;
+        }
+      }
+
+      .modal_pane_footer {
+        margin-top: 8px;
+
+        .confession_meta {
+          padding-top: 6px;
+          border-top: 1.5px dashed var(--card-border);
+        }
+
+        .confession_actions {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          margin-top: 8px;
+        }
+
+        .comment_count_badge {
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: var(--text-muted);
+        }
+      }
+    }
+
+    .comments_pane {
+      flex-shrink: 0;
+
+      .comments_pane_header {
+        display: none !important;
+      }
+
+      .comments_pane_body {
+        .comments_section {
+          margin-top: 12px;
+          padding-top: 12px;
+          border-top: 2px solid var(--card-border);
+          min-height: 0;
+
+          .comment_list {
+            max-height: calc(min(600px, 95vh) * 0.32);
+            margin-bottom: 12px;
+          }
+        }
+      }
+    }
+  }
+}

@@ -46,6 +46,8 @@
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, visibility 0.3s ease;
+  overscroll-behavior: contain;
+  touch-action: none;
 
   &.active {
     opacity: 1;
@@ -88,12 +90,13 @@
     align-items: center;
     gap: 10px;
     padding-bottom: 10px;
-    border-bottom: 2px solid #e2e8f0;
+    border-bottom: 2px solid var(--card-border);
   }
 }
 
 .readme_body {
   overflow-y: auto;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -245,4 +248,3 @@
     box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
   }
 }
-
