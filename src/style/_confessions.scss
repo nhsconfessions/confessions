@@ -187,11 +187,6 @@
   }
 }
 
-/* ==========================================================================
-   Confession Modal
-   - Screens >= 860px: 2-box side-by-side split view
-   - Screens < 860px: Old layout with modern neutral coloring (removed red)
-   ========================================================================== */
 .confession_modal_wrapper {
   position: fixed;
   top: 50%;
@@ -201,9 +196,6 @@
   overscroll-behavior: contain;
   animation: modalPopInConfession 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 
-  /* ========================================================================
-     Large Screens (>= 860px): 2 Separate Side-by-Side Boxes
-     ======================================================================== */
   @media (min-width: 860px) {
     width: min(1040px, 94vw);
     height: min(620px, 90vh);
@@ -363,9 +355,6 @@
     }
   }
 
-  /* ========================================================================
-     Small Screens (< 860px): Old Layout with Modern Neutral Styling (No Red)
-     ======================================================================== */
   @media (max-width: 859px) {
     --confession-card-height: min(600px, 95vh);
     width: 600px;

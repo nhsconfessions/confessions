@@ -175,7 +175,6 @@ export default function CommentSection({
             onClick={() => setActivePicker(value => value === "gif" ? null : "gif")}
           >
             <i className="fa-solid fa-image" />
-            <span>GIF</span>
           </button>
 
           <button
