@@ -42,6 +42,7 @@ The frontend requires these two environment variables:
 ```text
 VITE_SUPABASE_URL
 VITE_SUPABASE_ANON_KEY
+VITE_GIPHY_KEY
 ```
 
 ### 1. Create a Supabase Project
@@ -90,6 +91,7 @@ id
 uuid
 created_at
 content
+gif_id
 ```
 
 The `feedback` table stores feedback submitted through the website, contains:
@@ -107,6 +109,8 @@ add_comment
 ```
 
 These functions should be created with appropriate permissions and security settings.
+
+Run the SQL migration in `supabase/migrations` against your project before deploying. It adds `comments.gif_id` and replaces the text-only `add_comment` RPC with one that accepts exactly one of text or a GIF ID. Existing comment-count and `last_updated` triggers are left unchanged.
 
 ### 3. Enable Realtime
 
@@ -151,11 +155,12 @@ Create a `.env` file in the project root:
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-public-client-key
+VITE_GIPHY_KEY=your-giphy-api-key
 ```
 
-Replace the example values with those from your Supabase project.
+Replace the example values with those from your Supabase project and GIPHY API application. A template is available in `.env.example`. Set the same `VITE_GIPHY_KEY` in your deployment provider's build environment before building the site. Restart Vite after changing local environment variables.
 
-Do **not** put secret keys in this file when they will be exposed to the Vite frontend.
+Vite exposes `VITE_*` values in the frontend bundle, so only use public client/API keys here. Never put a Supabase service-role key or other server-side secret in this file.
 
 ## Development
 

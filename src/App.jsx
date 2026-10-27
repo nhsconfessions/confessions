@@ -453,7 +453,7 @@ export default function App() {
     try {
       const { data, error: commentsError } = await supabase
         .from("comments")
-        .select("id, content, created_at")
+        .select("id, content, gif_id, created_at")
         .eq("uuid", uuid)
         .order("created_at", { ascending: true });
 
@@ -462,6 +462,7 @@ export default function App() {
       const comments = Array.isArray(data) ? data.map(comment => ({
         id: comment.id,
         content: comment.content || "",
+        gif_id: comment.gif_id || null,
         time: comment.created_at
       })) : [];
 
@@ -589,34 +590,26 @@ export default function App() {
   );
 
   const addComment = useCallback(
-    async (uuid, text) => {
+    async (uuid, { text, gifId } = {}) => {
       const value = String(text || "").trim();
+      const selectedGifId = String(gifId || "").trim();
 
-      if (!value) return false;
+      if (Boolean(value) === Boolean(selectedGifId)) return false;
 
       try {
         const { data, error: commentError } = await supabase.rpc("add_comment", {
           p_uuid: uuid,
-          p_content: value
+          p_content: selectedGifId ? "" : value,
+          p_gif_id: selectedGifId || null
         });
 
         if (commentError) throw commentError;
 
-        const returnedComment = data?.comment;
+        if (data?.status !== "success") {
+          throw new Error(data?.message || "Comment rejected");
+        }
 
-        const comment = {
-          id: returnedComment?.id ?? Date.now(),
-          content: returnedComment?.content ?? value,
-          time: returnedComment?.time ?? new Date().toISOString()
-        };
-
-        setConfessions(items =>
-          items.map(item => String(item.uuid) === String(uuid) ? {
-            ...item,
-            comments: [...(item.comments || []), comment],
-            commentCount: (item.commentCount || 0) + 1
-          } : item)
-        );
+        await fetchComments(uuid);
         return true;
       } catch (commentError) {
         console.error("Comment submit error:", commentError);
@@ -624,7 +617,7 @@ export default function App() {
         return false;
       }
     },
-    []
+    [fetchComments]
   );
 
   const virtualRows = useMemo(() => {

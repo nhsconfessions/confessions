@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { MAX_LENGTH } from "../constants";
 import { formatTime } from "../utils";
+import { gifUrl } from "../gifPicker";
 import EmojiPicker from "./EmojiPicker";
+import GifPicker from "./GifPicker";
 
 export default function CommentSection({
   confession,
@@ -10,10 +12,11 @@ export default function CommentSection({
   isModalPane = false
 }) {
   const [input, setInput] = useState("");
-  const [emojiOpen, setEmojiOpen] = useState(false);
+  const [selectedGif, setSelectedGif] = useState(null);
+  const [activePicker, setActivePicker] = useState(null);
   const [loading, setLoading] = useState(confession.comments === null);
-  const [error, setError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(false);
   const emojiWrapperRef = useRef(null);
 
   useEffect(() => {
@@ -27,28 +30,50 @@ export default function CommentSection({
   }, [confession.uuid, confession.comments, fetchComments]);
 
   useEffect(() => {
-    if (!emojiOpen) return;
+    if (!activePicker) return;
     const handleDocumentClick = (event) => {
       if (emojiWrapperRef.current && !emojiWrapperRef.current.contains(event.target)) {
-        setEmojiOpen(false);
+        setActivePicker(null);
       }
     };
     document.addEventListener("mousedown", handleDocumentClick);
     return () => document.removeEventListener("mousedown", handleDocumentClick);
-  }, [emojiOpen]);
+  }, [activePicker]);
+
+  const chooseGif = (id) => {
+    setSelectedGif(id);
+    setInput("");
+    setActivePicker(null);
+    setError(false);
+  };
 
   const submit = async (event) => {
     event.preventDefault();
+
+    if (submitting) return;
     const text = input.trim();
-    if (!text || submitting) return;
+    if (Boolean(text) === Boolean(selectedGif)) {
+      setError(true);
+      return;
+    }
 
     setSubmitting(true);
+    setError(false);
+
     try {
-      const ok = await onComment(confession.uuid, text);
-      if (ok !== false) {
-        setInput("");
-        setEmojiOpen(false);
+      const success = await onComment(confession.uuid, {
+        text: selectedGif ? "" : text,
+        gifId: selectedGif
+      });
+
+      if (success === false) {
+        setError(true);
+        return;
       }
+
+      setInput("");
+      setSelectedGif(null);
+      setActivePicker(null);
     } finally {
       setSubmitting(false);
     }
@@ -61,48 +86,73 @@ export default function CommentSection({
     >
       <div className="comment_list">
         {loading ? (
-          <div style={{ textAlign: "center", padding: 10, color: "var(--text-muted)" }}>
+          <div className="comment_status">
             <i className="fa-solid fa-spinner fa-spin" /> Đang tải bình luận...
           </div>
-        ) : error ? (
-          <p style={{ color: "var(--text-muted)", textAlign: "center", padding: 10 }}>
-            Không thể tải bình luận.
-          </p>
+        ) : error && !confession.comments?.length ? (
+          <p className="comment_status">Không thể tải bình luận.</p>
         ) : confession.comments?.length ? (
-          confession.comments.map((comment, index) => {
-            const isObj = typeof comment === "object" && comment !== null;
-            const key = isObj && comment.id ? String(comment.id) : `${comment?.time || "comment"}-${index}`;
-            const text = isObj ? comment.content : comment;
-            const time = isObj ? comment.time : null;
-
-            return (
-              <div className="comment_item" key={key}>
-                <span className="comment_text">{text}</span>
-                {time && (
-                  <span className="comment_time">
-                    {formatTime(time)}
-                  </span>
-                )}
-              </div>
-            );
-          })
+          confession.comments.map((comment, index) => (
+            <div
+              className="comment_item"
+              key={comment.id ?? `${comment.time || "comment"}-${index}`}
+            >
+              {comment.gif_id ? (
+                <img
+                  className="comment_gif"
+                  src={gifUrl(comment.gif_id)}
+                  alt="GIF bình luận"
+                  loading="lazy"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <span className="comment_text">{comment.content}</span>
+              )}
+              {comment.time && (
+                <span className="comment_time">{formatTime(comment.time)}</span>
+              )}
+            </div>
+          ))
         ) : (
-          <p style={{ textAlign: "center", color: "var(--text-muted)", padding: 10 }}>
-            Chưa có bình luận nào.
-          </p>
+          <p className="comment_status">Chưa có bình luận nào.</p>
         )}
       </div>
 
       <div className="comment_form_wrapper" ref={emojiWrapperRef}>
+        {selectedGif && (
+          <div className="comment_gif_preview">
+            <img
+              src={gifUrl(selectedGif)}
+              alt="GIF đã chọn"
+              referrerPolicy="no-referrer"
+            />
+            <button
+              type="button"
+              onClick={() => setSelectedGif(null)}
+              aria-label="Xóa GIF đã chọn"
+              disabled={submitting}
+            >
+              ×
+            </button>
+          </div>
+        )}
+
         <form className="comment_form" onSubmit={submit}>
           <textarea
             className="comment_input"
             rows="1"
             maxLength={MAX_LENGTH}
-            placeholder="Viết bình luận..."
+            placeholder={
+              selectedGif
+                ? "Đã chọn GIF. Xóa GIF để viết bình luận."
+                : "Viết bình luận..."
+            }
             value={input}
-            disabled={submitting}
-            onChange={(event) => setInput(event.target.value)}
+            disabled={Boolean(selectedGif) || submitting}
+            onChange={(event) => {
+              setInput(event.target.value);
+              setError(false);
+            }}
           />
 
           <button
@@ -110,34 +160,51 @@ export default function CommentSection({
             className="comment_emoji_btn"
             title="Chọn biểu cảm"
             aria-label="Chọn biểu cảm"
-            disabled={submitting}
-            onClick={() => setEmojiOpen((value) => !value)}
+            disabled={Boolean(selectedGif) || submitting}
+            onClick={() => setActivePicker(value => value === "emoji" ? null : "emoji")}
           >
             <i className="fa-regular fa-face-smile" />
           </button>
 
           <button
+            type="button"
+            className="comment_emoji_btn comment_gif_btn"
+            title="Chọn GIF"
+            aria-label="Chọn GIF"
+            disabled={submitting}
+            onClick={() => setActivePicker(value => value === "gif" ? null : "gif")}
+          >
+            <i className="fa-solid fa-image" />
+            <span>GIF</span>
+          </button>
+
+          <button
             type="submit"
             className="comment_submit"
-            disabled={submitting || !input.trim()}
+            disabled={submitting || (!selectedGif && !input.trim())}
           >
-            {submitting ? (
-              <i className="fa-solid fa-spinner fa-spin" />
-            ) : (
-              "Gửi"
-            )}
+            {submitting ? <i className="fa-solid fa-spinner fa-spin" /> : "Gửi"}
           </button>
         </form>
 
-        {emojiOpen && (
+        {error && (
+          <p className="comment_error" role="alert">
+            Không thể gửi bình luận. Hãy thử lại.
+          </p>
+        )}
+
+        {activePicker === "emoji" && !selectedGif && (
           <div className="emoji_picker_container comment_emoji_container">
             <EmojiPicker
               onSelect={(emoji) => {
-                setInput((value) => `${value}${emoji}`);
-                setEmojiOpen(false);
+                setInput((value) => `${value}${emoji}`.slice(0, MAX_LENGTH));
+                setActivePicker(null);
               }}
             />
           </div>
+        )}
+        {activePicker === "gif" && !selectedGif && (
+          <GifPicker onSelect={chooseGif} />
         )}
       </div>
     </div>
