@@ -30,11 +30,6 @@ Install the dependencies:
 ```bash
 npm install
 ```
- 
-```text
-confessions
-comments
-```
 
 ## Environment File
 
