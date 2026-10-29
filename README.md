@@ -30,123 +30,11 @@ Install the dependencies:
 ```bash
 npm install
 ```
-
-## Supabase Setup
-
-The application uses Supabase as its backend.
-
-### Environment Variables
-
-The frontend requires these two environment variables:
-
-```text
-VITE_SUPABASE_URL
-VITE_SUPABASE_ANON_KEY
-VITE_GIPHY_KEY
-```
-
-### 1. Create a Supabase Project
-
-Create a project at [Supabase](https://supabase.com/).
-
-After creating the project, open:
-
-**Project Settings → API**
-
-Copy the following values:
-
-* **Project URL**
-* **Publishable / anonymous client key** appropriate for your project
-
-> **Important:** Never put a Supabase **service-role key** or other secret key in the frontend.
->
-> This application is designed to use a public client key together with PostgreSQL permissions, Row Level Security (RLS), and database functions.
-
-### 2. Create the Database
-
-The application expects these main tables:
-
-```text
-confessions
-comments
-feedback
-```
-
-The `confessions` table contains these fields:
-
-```text
-uuid
-created_at
-content
-status
-likes
-comment_count
-last_updated
-```
-
-The `comments` table contains:
-
-```text
-id
-uuid
-created_at
-content
-gif_id
-```
-
-The `feedback` table stores feedback submitted through the website, contains:
-
-```text
-created_at
-content
-```
-
-The frontend also uses these database functions:
-
-```text
-like_confession
-add_comment
-```
-
-These functions should be created with appropriate permissions and security settings.
-
-Run the SQL migration in `supabase/migrations` against your project before deploying. It adds `comments.gif_id` and replaces the text-only `add_comment` RPC with one that accepts exactly one of text or a GIF ID. Existing comment-count and `last_updated` triggers are left unchanged.
-
-### 3. Enable Realtime
-
-The frontend uses **Supabase Realtime** to receive database changes.
-
-Enable Realtime for the tables that need to be monitored, especially:
-
+ 
 ```text
 confessions
 comments
 ```
-
-This allows updates to appear without requiring a full page refresh.
-
-### 4. Configure Row Level Security
-
-When Row Level Security is enabled, create policies that allow only the required operations.
-
-A typical public deployment needs to handle:
-
-* Reading approved and important confessions
-* Submitting pending confessions
-* Adding comments
-* Submitting feedback
-* Increasing confession likes through the database function
-
-> **Do not** fix permission errors by putting the Supabase service-role key in the frontend.
->
-> The service-role key is a **server-side secret** and must never be exposed in a Vite client application.
-
-Before deploying publicly, review your:
-
-* Tables
-* RLS policies
-* Database functions
-* Grants and permissions
 
 ## Environment File
 
@@ -158,7 +46,7 @@ VITE_SUPABASE_ANON_KEY=your-public-client-key
 VITE_GIPHY_KEY=your-giphy-api-key
 ```
 
-Replace the example values with those from your Supabase project and GIPHY API application. A template is available in `.env.example`. Set the same `VITE_GIPHY_KEY` in your deployment provider's build environment before building the site. Restart Vite after changing local environment variables.
+Replace the example values with those from your Supabase project and GIPHY API application.
 
 Vite exposes `VITE_*` values in the frontend bundle, so only use public client/API keys here. Never put a Supabase service-role key or other server-side secret in this file.
 
@@ -171,22 +59,6 @@ npm run dev
 ```
 
 Vite will start a local development server.
-
-## Production Build
-
-Create a production build with:
-
-```bash
-npm run build
-```
-
-The generated files will be placed in:
-
-```text
-dist/
-```
-
-The contents of `dist/` can then be deployed to a static hosting service such as GitHub Pages.
 
 ## Disclaimer
 
