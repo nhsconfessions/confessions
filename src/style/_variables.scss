@@ -36,7 +36,6 @@ $radius-md: 12px;
 $radius-sm: 8px;
 $radius-pill: 999px;
 
-// Shared spacing scale (use these for padding / gap)
 $space-1: 4px;
 $space-2: 8px;
 $space-3: 12px;
@@ -74,7 +73,6 @@ $transition: 0.2s ease;
   }
 }
 
-// Shared surface used by hero, form card, date blocks, modals
 @mixin surface-card {
   background: var(--card-bg);
   border: $border-width-strong solid var(--card-border);
@@ -82,7 +80,6 @@ $transition: 0.2s ease;
   box-shadow: var(--shadow-md);
 }
 
-// Shared control (inputs + textareas)
 @mixin control-field {
   font-family: inherit;
   color: var(--text-main);
@@ -98,7 +95,6 @@ $transition: 0.2s ease;
   }
 }
 
-// Shared primary action button
 @mixin btn-primary {
   font-family: inherit;
   font-weight: 600;
