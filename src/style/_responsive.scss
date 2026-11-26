@@ -16,13 +16,11 @@
     align-items: center;
   }
 
-  /* Hide desktop navigation controls on mobile */
   #readme_toggle_btn,
   #contact_us_link {
     display: none;
   }
 
-  /* Hamburger menu */
   .mobile_header_menu {
     display: block;
     position: absolute;
@@ -57,7 +55,6 @@
     }
   }
 
-  /* Dropdown menu */
   .mobile_header_menu_dropdown {
     position: absolute;
     top: 36px;
@@ -113,7 +110,6 @@
       text-align: center;
     }
 
-    /* README icon */
     &:has(.fa-book-open) {
       i {
         color: var(--accent-color);
@@ -139,7 +135,6 @@
     }
   }
 
-  /* Theme toggle remains independent */
   #theme_toggle_btn {
     position: absolute;
     top: 14px;

@@ -944,7 +944,6 @@ export default function App() {
       }
 
       const performJump = () => {
-        // If element is already in feed DOM, scroll directly to it
         const existingEl = document.getElementById(`confession-feed-${idStr}`);
         if (existingEl) {
           existingEl.scrollIntoView({ behavior: "smooth", block: "center" });
