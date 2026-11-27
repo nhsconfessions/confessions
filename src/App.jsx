@@ -450,6 +450,9 @@ export default function App() {
           } : row;
         });
       });
+      if (expandedIdRef.current) {
+        fetchComments(expandedIdRef.current).catch(console.error);
+      }
       if (announcementRows) {
         setAnnouncements(syncAnnouncementNumbers(announcementRows, confessionPage.rows));
       }
