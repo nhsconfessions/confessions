@@ -666,7 +666,7 @@ export default function App() {
         if (commentError) throw commentError;
 
         if (data?.status !== "success") {
-          throw new Error(data?.message || "Comment rejected");
+          throw new Error(data?.message || "Không thể gửi bình luận. Vui lòng thử lại sau.");
         }
 
         await fetchComments(uuid);
@@ -952,7 +952,6 @@ export default function App() {
       }
 
       const performJump = () => {
-        // If element is already in feed DOM, scroll directly to it
         const existingEl = document.getElementById(`confession-feed-${idStr}`);
         if (existingEl) {
           existingEl.scrollIntoView({ behavior: "smooth", block: "center" });

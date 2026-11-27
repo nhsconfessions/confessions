@@ -99,26 +99,32 @@ export default function CommentSection({
             >
               {comment.ban !== undefined && comment.ban !== null && comment.ban !== "" ? (
                 comment.ban === "." ? (
-                  <em className="comment_text">Bình luận này đã bị ẩn do vi phạm nguyên tắc cộng đồng.</em>
+                  <em className="comment_text">
+                    Bình luận này đã bị ẩn do vi phạm nguyên tắc cộng đồng.
+                  </em>
                 ) : (
                   <em className="comment_text">
-                    Bình luận này đã bị ẩn.
+                    Bình luận này đã bị ẩn.<br />
                     Lý do: {comment.ban}
                   </em>
                 )
-              ) : comment.gif_id ? (
-                <img
-                  className="comment_gif"
-                  src={gifUrl(comment.gif_id)}
-                  alt="GIF bình luận"
-                  loading="lazy"
-                  referrerPolicy="no-referrer"
-                />
               ) : (
-                <span className="comment_text">{comment.content}</span>
-              )}
-              {comment.time && (
-                <span className="comment_time">{formatTime(comment.time)}</span>
+                <>
+                  {comment.gif_id ? (
+                    <img
+                      className="comment_gif"
+                      src={gifUrl(comment.gif_id)}
+                      alt="GIF bình luận"
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <span className="comment_text">{comment.content}</span>
+                  )}
+                  {comment.time && (
+                    <span className="comment_time">{formatTime(comment.time)}</span>
+                  )}
+                </>
               )}
             </div>
           ))
@@ -197,7 +203,7 @@ export default function CommentSection({
 
         {error && (
           <p className="comment_error" role="alert">
-            Không thể gửi bình luận. Hãy thử lại.
+            Không thể gửi bình luận. Vui lòng thử lại sau.
           </p>
         )}
 
