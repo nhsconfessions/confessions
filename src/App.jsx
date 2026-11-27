@@ -556,14 +556,17 @@ export default function App() {
           schema: "public",
           table: "comments"
         },
-        (payload) => {
-          if (
-            expandedIdRef.current &&
-            payload?.new?.uuid &&
-            String(payload.new.uuid) === String(expandedIdRef.current)
-          ) {
-            fetchComments(expandedIdRef.current).catch(console.error);
+        async (payload) => {
+          const uuid = payload.new?.uuid || payload.old?.uuid;
+
+          if (uuid && String(uuid) === String(expandedIdRef.current)) {
+            try {
+              await fetchComments(uuid);
+            } catch (error) {
+              console.error("Realtime comment refresh failed:", error);
+            }
           }
+
           refreshLoaded().catch(error => {
             console.error("Realtime comment refresh error:", error);
           });
