@@ -495,19 +495,21 @@ export default function App() {
 
   const fetchComments = useCallback(async uuid => {
     try {
-      const { data, error: commentsError } = await supabase
-        .from("comments")
-        .select("id, content, gif_id, created_at")
-        .eq("uuid", uuid)
-        .order("created_at", { ascending: true });
+      const { data, error: commentsError } = await supabase.rpc("get_comments", {
+        p_uuid: uuid
+      });
 
       if (commentsError) throw commentsError;
 
       const comments = Array.isArray(data) ? data.map(comment => ({
         id: comment.id,
-        content: comment.content || "",
-        gif_id: comment.gif_id || null,
-        time: comment.created_at
+        ...(comment.ban !== null && comment.ban !== undefined && comment.ban !== ""
+          ? { ban: comment.ban }
+          : {
+              content: comment.content || "",
+              gif_id: comment.gif_id || null
+            }),
+        time: comment.time
       })) : [];
 
       setConfessions(items =>

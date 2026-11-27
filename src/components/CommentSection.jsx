@@ -97,7 +97,15 @@ export default function CommentSection({
               className="comment_item"
               key={comment.id ?? `${comment.time || "comment"}-${index}`}
             >
-              {comment.gif_id ? (
+              {comment.ban !== undefined && comment.ban !== null && comment.ban !== "" ? (
+                comment.ban === "." ? (
+                  <em className="comment_text">This comment is banned</em>
+                ) : (
+                  <em className="comment_text">
+                    This comment is banned due to: {comment.ban}
+                  </em>
+                )
+              ) : comment.gif_id ? (
                 <img
                   className="comment_gif"
                   src={gifUrl(comment.gif_id)}
