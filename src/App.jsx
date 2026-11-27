@@ -665,8 +665,8 @@ export default function App() {
 
         if (commentError) throw commentError;
 
-        if (data?.status !== "success") {
-          throw new Error(data?.message || "Không thể gửi bình luận. Vui lòng thử lại sau.");
+        if (data?.success !== true) {
+          throw new Error(data?.error || "Không thể gửi bình luận. Vui lòng thử lại sau.");
         }
 
         await fetchComments(uuid);
