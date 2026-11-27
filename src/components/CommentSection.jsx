@@ -99,10 +99,11 @@ export default function CommentSection({
             >
               {comment.ban !== undefined && comment.ban !== null && comment.ban !== "" ? (
                 comment.ban === "." ? (
-                  <em className="comment_text">This comment is banned</em>
+                  <em className="comment_text">Bình luận này đã bị ẩn do vi phạm nguyên tắc cộng đồng.</em>
                 ) : (
                   <em className="comment_text">
-                    This comment is banned due to: {comment.ban}
+                    Bình luận này đã bị ẩn.
+                    Lý do: {comment.ban}
                   </em>
                 )
               ) : comment.gif_id ? (
